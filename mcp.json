@@ -1,0 +1,47 @@
+{
+  "$schema": "https://modelcontextprotocol.io/schema.json",
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-context7"],
+      "description": "Retrieve up-to-date documentation and code examples for any library"
+    },
+    "serena": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-serena"],
+      "description": "Semantic code operations with LSP-powered tools"
+    },
+    "grep-app": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-grep-app"],
+      "description": "Advanced search and grep operations"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "description": "Complex reasoning and step-by-step thinking"
+    }
+  },
+  "recommendedServers": [
+    {
+      "name": "context7",
+      "purpose": "Latest library documentation",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/context7"
+    },
+    {
+      "name": "serena",
+      "purpose": "Semantic code operations",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/serena"
+    },
+    {
+      "name": "grep-app",
+      "purpose": "Advanced search",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/grep-app"
+    },
+    {
+      "name": "sequential-thinking",
+      "purpose": "Complex reasoning",
+      "url": "https://github.com/modelcontextprotocol/servers/tree/main/src/sequential-thinking"
+    }
+  ]
+}
