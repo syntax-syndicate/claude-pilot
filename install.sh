@@ -160,9 +160,29 @@ check_installation_method() {
     fi
 }
 
+# Install pipx if not available
+ensure_pipx() {
+    if command -v pipx &> /dev/null; then
+        return 0
+    fi
+
+    # Try to install pipx
+    if command -v pip3 &> /dev/null; then
+        pip3 install --user pipx > /dev/null 2>&1
+        # Add pipx to PATH for this session
+        local user_bin=$(python3 -m site --user-base 2>/dev/null)/bin
+        export PATH="$user_bin:$PATH"
+        # Run ensurepath to set up PATH permanently
+        "$user_bin/pipx" ensurepath > /dev/null 2>&1 || true
+        return 0
+    fi
+    return 1
+}
+
 # Install using pipx (preferred)
 install_with_pipx() {
     pipx install claude-pilot --force > /dev/null 2>&1
+    pipx ensurepath > /dev/null 2>&1 || true
 }
 
 # Install using pip
@@ -180,32 +200,33 @@ do_install() {
         error_exit "Python 3 is required but not found. Please install Python 3.9+ first."
     fi
 
-    # Check installation method
-    local method=$(check_installation_method)
-
-    if [[ -z "${method}" ]]; then
-        error_exit "Neither pipx nor pip found. Please install pip first:\n  python3 -m ensurepip --upgrade"
-    fi
-
-    # Install
+    # Try to use pipx (preferred) - install if needed
     info "Installing claude-pilot..."
 
-    if [[ "${method}" == "pipx" ]]; then
+    if command -v pipx &> /dev/null; then
         dim "Using pipx (recommended)"
         install_with_pipx &
         spinner $!
         wait $!
-    else
-        dim "Using ${method}"
-        install_with_pip "$method" &
+    elif ensure_pipx && command -v pipx &> /dev/null; then
+        dim "Installed pipx, using it now"
+        install_with_pipx &
         spinner $!
         wait $!
-    fi
-
-    # Setup PATH
-    local path_modified=0
-    if [[ "${method}" != "pipx" ]]; then
-        setup_path || path_modified=1
+    elif command -v pip3 &> /dev/null; then
+        dim "Using pip3"
+        install_with_pip "pip3" &
+        spinner $!
+        wait $!
+        setup_path || true
+    elif command -v pip &> /dev/null; then
+        dim "Using pip"
+        install_with_pip "pip" &
+        spinner $!
+        wait $!
+        setup_path || true
+    else
+        error_exit "Neither pipx nor pip found. Please install pip first:\n  python3 -m ensurepip --upgrade"
     fi
 
     echo ""
@@ -229,16 +250,13 @@ do_install() {
         # Installed but not in current PATH
         success "Installation complete!"
         echo ""
-        echo -e "${YELLOW}┌─────────────────────────────────────────────────┐${NC}"
-        echo -e "${YELLOW}│${NC}  ${GREEN}Almost there!${NC} Run this to activate:            ${YELLOW}│${NC}"
-        echo -e "${YELLOW}│${NC}                                                 ${YELLOW}│${NC}"
-        echo -e "${YELLOW}│${NC}  ${CYAN}source ${config_file}${NC}"
-        echo -e "${YELLOW}│${NC}                                                 ${YELLOW}│${NC}"
-        echo -e "${YELLOW}│${NC}  Or simply ${GREEN}open a new terminal${NC}               ${YELLOW}│${NC}"
-        echo -e "${YELLOW}└─────────────────────────────────────────────────┘${NC}"
+        local installed_version=$("$bin_dir/claude-pilot" --version 2>/dev/null | head -1)
+        dim "Installed: $installed_version"
         echo ""
-        info "Then run:"
-        echo -e "  ${CYAN}cd${NC} your-project"
+        info "Quick Start (works right now):"
+        echo -e "  ${CYAN}${bin_dir}/claude-pilot init .${NC}"
+        echo ""
+        info "Or open a ${GREEN}new terminal${NC} and run:"
         echo -e "  ${CYAN}claude-pilot init .${NC}"
         echo ""
     else
