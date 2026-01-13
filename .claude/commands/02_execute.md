@@ -506,8 +506,8 @@ If `"$ARGUMENTS"` contains `--no-docs`, skip documentation.
 
 ## References
 
-- **TDD Guide**: `.claude/guides/ralph-loop-tdd.md`
-- **Context Engineering**: `.claude/guides/context-engineering.md`
+- **3-Tier Docs**: [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
+- **Review Extensions**: `.claude/guides/review-extensions.md`
 
 ---
 

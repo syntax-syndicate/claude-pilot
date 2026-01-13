@@ -247,5 +247,5 @@ This will:
 
 ## References
 
-- **Context Engineering**: `.claude/guides/context-engineering.md`
-- **Ralph Loop TDD**: `.claude/guides/ralph-loop-tdd.md`
+- **3-Tier Docs**: [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
+- **Review Extensions**: `.claude/guides/review-extensions.md`
