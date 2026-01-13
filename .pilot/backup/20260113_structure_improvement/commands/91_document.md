@@ -249,4 +249,5 @@ All modes execute full sync - no partial options
 - @.claude/templates/CONTEXT-tier3.md.template
 - @.claude/templates/CONTEXT.md.template
 - `/92_init` (initialize 3-Tier system)
+- @.claude/guides/review-extensions.md
 - **Branch**: !`git rev-parse --abbrev-ref HEAD`

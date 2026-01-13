@@ -179,5 +179,6 @@ EOF
 ---
 
 ## References
+- `.claude/guides/ralph-loop-tdd.md`
 - **Branch**: !`git rev-parse --abbrev-ref HEAD`
 - **Status**: !`git status --short`

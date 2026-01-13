@@ -63,6 +63,7 @@ claude-pilot/
 │   ├── settings.json       # Hooks, LSP, language config
 │   ├── commands/           # Slash commands (7)
 │   ├── templates/          # CONTEXT.md, SKILL.md, PRP.md, Tier templates
+│   ├── guides/             # Methodology guides
 │   └── scripts/hooks/      # Typecheck, lint, todos, branch
 ├── .pilot/                 # Plan management
 │   └── plan/
@@ -369,6 +370,7 @@ claude-pilot synthesizes best practices from these projects:
 
 ## Guides
 
+- [Review Extensions Guide](.claude/guides/review-extensions.md)
 - [Getting Started](GETTING_STARTED.md)
 - [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit) - 3-Tier Documentation System
 

@@ -19,7 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install
 
 The installer will:
 1. Download claude-pilot core files from GitHub
-2. Create `.claude/` directory with commands, templates, and hooks
+2. Create `.claude/` directory with commands, guides, templates
 3. Create `.pilot/` directory for plan management
 4. Initialize version tracking
 

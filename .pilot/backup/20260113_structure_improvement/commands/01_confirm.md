@@ -141,4 +141,5 @@ Args: "$PLAN_FILE"
 
 ## References
 - [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
+- `.claude/guides/review-extensions.md`
 - **Branch**: !`git rev-parse --abbrev-ref HEAD`

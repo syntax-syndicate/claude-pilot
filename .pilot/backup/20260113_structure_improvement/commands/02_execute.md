@@ -133,35 +133,15 @@ Iterate all SC: SC-1 Red→Green→Refactor, SC-2 Red→Green→Refactor, ...unt
 
 > **Principle**: Self-correcting loop until completion marker detected
 
-### 4.1 Completion Promise
-> Output `<RALPH_COMPLETE>` marker **ONLY when** ALL conditions are met:
-> - [ ] All tests pass
-> - [ ] Coverage 80%+ (core modules 90%+)
-> - [ ] Type check clean
-> - [ ] Lint clean
-> - [ ] All todos completed
-
-### 4.2 Loop Structure
+### 4.1 Loop Structure
 ```
-MAX_ITERATIONS=7
-ITERATION=1
-COVERAGE_THRESHOLD=80
-CORE_COVERAGE_THRESHOLD=90
-
-WHILE ITERATION <= MAX_ITERATIONS AND NOT <RALPH_COMPLETE>:
-    1. Run: tests, type-check, lint, coverage
-    2. Log iteration to ralph-loop-log.md
-    3. IF all pass AND coverage >= threshold AND todos complete:
-         Output: <RALPH_COMPLETE>
-    4. ELSE:
-         Analyze failures
-         Fix (priority: errors > coverage > lint)
-         ITERATION++
-    5. IF ITERATION > MAX_ITERATIONS:
-         Output: <RALPH_BLOCKED> with summary
+WHILE NOT <done_marker>:
+    1. Run verification (tests, type-check, lint)
+    2. IF all pass: Check todos; IF all complete → mark <done_marker>
+    3. ELSE: Analyze failures, fix (errors > warnings > suggestions), continue
 ```
 
-### 4.3 Verification Commands
+### 4.2 Verification Commands
 ```bash
 npx tsc --noEmit      # Type check
 npm run lint          # Lint
@@ -169,14 +149,13 @@ npm run test          # Tests
 npm run test -- --coverage  # Coverage
 ```
 
-### 4.4 Exit Conditions
+### 4.3 Exit Conditions
 | Type | Criteria |
 |------|----------|
-| ✅ Success | All tests pass, coverage 80%+ (core 90%+), type clean, lint clean, todos complete |
-| ❌ Failure | Max 7 iterations reached, unrecoverable error, user intervention needed |
-| ⚠️ Blocked | `<RALPH_BLOCKED>` output - requires manual review |
+| ✅ Success | All tests pass, type clean, lint clean, todos complete |
+| ❌ Failure | Max 7 iterations, unrecoverable error, user intervention needed |
 
-### 4.5 Iteration Tracking
+### 4.4 Iteration Tracking
 Log to `.pilot/plan/in_progress/{RUN_ID}/ralph-loop-log.md`:
 
 | Iteration | Tests | Types | Lint | Coverage | Status |
@@ -184,22 +163,6 @@ Log to `.pilot/plan/in_progress/{RUN_ID}/ralph-loop-log.md`:
 | 1 | ❌ 3 fail | ✅ | ⚠️ 2 | 45% | Continue |
 | 2 | ❌ 1 fail | ✅ | ✅ | 72% | Continue |
 | 3 | ✅ | ✅ | ✅ | 82% | ✅ Done |
-
-### 4.6 Coverage Enforcement
-> **Critical**: Coverage below threshold MUST trigger continuation
-> - Overall < 80%: Continue improving tests
-> - Core modules < 90%: Focus on core test coverage
-> - Parse coverage output to extract percentage
-
-**Coverage Parsing Example**:
-```bash
-# npm run test -- --coverage
-COVERAGE_OUTPUT=$(npm run test -- --coverage --silent 2>&1)
-OVERALL=$(echo "$COVERAGE_OUTPUT" | grep -oP 'All files[^%]*\K\d+' || echo "0")
-if [ "$OVERALL" -lt $COVERAGE_THRESHOLD ]; then
-    echo "⚠️ Coverage ${OVERALL}% below threshold ${COVERAGE_THRESHOLD}%"
-fi
-```
 
 ---
 
@@ -295,6 +258,7 @@ If `"$ARGUMENTS"` contains `--no-docs`, skip documentation
 
 ## References
 - [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
+- `.claude/guides/review-extensions.md`
 - **Branch**: !`git rev-parse --abbrev-ref HEAD`
 
 ---
