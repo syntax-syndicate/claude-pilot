@@ -189,27 +189,19 @@ SC-{N}: {Description}
 
 ---
 
-## Step 4: Create Plan File
+## Step 4: Present Plan Summary
 
-### 4.1 Generate Plan Structure
+> **Principle**: No file creation. Present the complete plan in conversation for review.
 
-Create timestamped plan file:
+### 4.1 Plan Structure
 
-```bash
-mkdir -p .pilot/plan/pending
-TS="$(date +%Y%m%d_%H%M%S)"
-WORK_NAME="$(echo "$ARGUMENTS" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g' | head -c 50)"
-PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
-```
-
-### 4.2 Plan Content Structure
+Present the complete SPEC-First plan with the following structure:
 
 ```markdown
 # {Work Name}
 
 - Generated at: {timestamp}
 - Work name: {work_name}
-- Location: {plan_path}
 
 ## User Requirements
 
@@ -269,15 +261,12 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 [Any unresolved items]
 ```
 
-### 4.3 Write Plan File
+### 4.2 Present Summary
 
-```bash
-cat > "$PLAN_FILE" << 'PLAN_EOF'
-[Content above]
-PLAN_EOF
-
-echo "Plan created: $PLAN_FILE"
-```
+After presenting the complete plan, provide:
+- Brief recap of the approach
+- Confirmation that no files have been created
+- Next step instruction
 
 ---
 
@@ -293,7 +282,7 @@ echo "Plan created: $PLAN_FILE"
 - [ ] Plan follows structure
 - [ ] All 5 phases defined
 - [ ] Risks documented
-- [ ] Plan file created in .pilot/plan/pending/
+- [ ] Plan presented in conversation (no file created)
 
 ### Handoff
 - [ ] User approved
@@ -313,18 +302,31 @@ echo "Plan created: $PLAN_FILE"
 
 ---
 
-## Next Command
+## STOP
 
 ```
-/01_confirm {plan_filename}
-```
+═══════════════════════════════════════════════════════════
+  MANDATORY STOP - DO NOT PROCEED TO EXECUTION
+═══════════════════════════════════════════════════════════
 
-Or just `/01_confirm` to use the most recent pending plan.
+This command (/00_plan) completes the PLANNING phase.
+No files have been created. The plan exists only in this conversation.
+
+To save this plan and proceed to execution, run:
+
+    /01_confirm
+
+This will:
+1. Extract the plan from this conversation context
+2. Create a plan file in .pilot/plan/pending/
+3. STOP and wait for you to run /02_execute
+
+═══════════════════════════════════════════════════════════
+```
 
 ---
 
 ## References
 
-- **PRP Template**: `.claude/templates/PRP.md.template`
 - **Context Engineering**: `.claude/guides/context-engineering.md`
 - **Ralph Loop TDD**: `.claude/guides/ralph-loop-tdd.md`

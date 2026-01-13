@@ -25,31 +25,86 @@ _Execute the current in-progress plan using Ralph Loop TDD pattern - iterate unt
 
 Priority order:
 1. Explicit path from `"$ARGUMENTS"`
-2. Read active pointer from `.pilot/plan/active/{branch}.txt`
-3. Most recent file in `.pilot/plan/in_progress/`
+2. Oldest (first created) file in `.pilot/plan/pending/`
+3. Read active pointer from `.pilot/plan/active/{branch}.txt`
+4. Most recent file in `.pilot/plan/in_progress/`
 
 ```bash
-# Find active pointer
+PLAN_PATH=""
+
+# 1. Explicit path from arguments
+if [ -n "$EXPLICIT_PATH" ]; then
+    PLAN_PATH="$EXPLICIT_PATH"
+fi
+
+# 2. Oldest file in pending/
+if [ -z "$PLAN_PATH" ]; then
+    PLAN_PATH="$(ls -1t .pilot/plan/pending/*.md 2>/dev/null | tail -1)"
+fi
+
+# 3. Read active pointer
+if [ -z "$PLAN_PATH" ]; then
+    BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
+    KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
+    ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
+
+    if [ -f "$ACTIVE_PTR" ]; then
+        PLAN_PATH="$(cat "$ACTIVE_PTR")"
+    fi
+fi
+
+# 4. Most recent in in_progress/
+if [ -z "$PLAN_PATH" ]; then
+    PLAN_PATH="$(ls -1t .pilot/plan/in_progress/*.md 2>/dev/null | head -1)"
+fi
+
+if [ -z "$PLAN_PATH" ] || [ ! -f "$PLAN_PATH" ]; then
+    echo "No plan found to execute."
+    echo "Run /00_plan to create a plan, then /01_confirm to save it."
+    exit 1
+fi
+
+echo "Selected plan: $PLAN_PATH"
+```
+
+---
+
+## Step 0.5: Move Plan to In-Progress
+
+> **Principle**: If plan is in pending/, move it to in_progress/ first.
+
+### 0.5.1 Check if Plan is in Pending
+
+```bash
+if printf "%s" "$PLAN_PATH" | grep -q "/pending/"; then
+    echo "Plan is in pending/. Moving to in_progress/..."
+
+    # Extract filename
+    PLAN_FILENAME="$(basename "$PLAN_PATH")"
+    IN_PROGRESS_PATH=".pilot/plan/in_progress/${PLAN_FILENAME}"
+
+    # Move the file
+    mv "$PLAN_PATH" "$IN_PROGRESS_PATH"
+    PLAN_PATH="$IN_PROGRESS_PATH"
+
+    echo "Plan moved to: $PLAN_PATH"
+fi
+```
+
+---
+
+## Step 0.6: Create Active Pointer
+
+> **Principle**: Record the active plan for this branch.
+
+```bash
+mkdir -p .pilot/plan/active
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
 KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
 ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
 
-if [ -f "$ACTIVE_PTR" ]; then
-    RUN_DIR="$(cat "$ACTIVE_PTR")"
-    PLAN_PATH="$RUN_DIR/plan.md"
-fi
-
-# Fallback to most recent
-if [ -z "$PLAN_PATH" ]; then
-    PLAN_PATH="$(ls -1tr .pilot/plan/in_progress/*/*.md 2>/dev/null | head -1)"
-    RUN_DIR="$(dirname "$PLAN_PATH")"
-fi
-
-if [ -z "$PLAN_PATH" ]; then
-    echo "No in-progress plan found."
-    echo "Run /00_plan and /01_confirm first."
-    exit 1
-fi
+printf "%s" "$PLAN_PATH" > "$ACTIVE_PTR"
+echo "Active plan recorded for branch: $BRANCH"
 ```
 
 ---
@@ -344,7 +399,6 @@ If `"$ARGUMENTS"` contains `--no-docs`, skip documentation.
 
 ## References
 
-- **Plan Template**: `.claude/templates/PRP.md.template`
 - **TDD Guide**: `.claude/guides/ralph-loop-tdd.md`
 - **Context Engineering**: `.claude/guides/context-engineering.md`
 

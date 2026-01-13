@@ -1,67 +1,70 @@
 ---
-description: Confirm and move a plan to in-progress state (ready for execution)
-argument-hint: "[plan_path|work_name] --no-review - optional plan path or work name; --no-review skips auto-review"
+description: Extract plan from conversation, create file in pending/, and STOP
+argument-hint: "[work_name] --no-review - optional work name for the plan file; --no-review skips auto-review"
 allowed-tools: Read, Glob, Grep, Write, Bash(*)
 ---
 
+```
+═══════════════════════════════════════════════════════════
+  MANDATORY STOP - CONFIRMATION ONLY
+═══════════════════════════════════════════════════════════
+
+This command (/01_confirm) ONLY:
+1. Extracts the plan from the conversation context
+2. Creates a plan file in .pilot/plan/pending/
+3. STOPS - does NOT proceed to execution
+
+To execute the plan, run /02_execute after this command completes.
+
+═══════════════════════════════════════════════════════════
+```
+
 # /01_confirm
 
-_Move a pending plan to in-progress state, ready for execution with /02_execute._
+_Extract the plan from conversation context, create plan file in pending/, and STOP._
 
 ---
 
 ## Core Philosophy
 
-- **Standalone**: The output must be sufficient without reading chat history.
+- **No Execution**: This command only creates the plan file. It does NOT execute.
+- **Context-Driven**: Extract the plan from the preceding conversation.
+- **Standalone Output**: The created plan file must be sufficient for execution.
 - **Evidence-driven**: Convert vague intent into verifiable acceptance criteria.
 - **Executable**: Include concrete steps, commands, and checklists.
-- **Merge-aware**: If prior plans exist, inherit and reconcile them explicitly.
 
 ---
 
 ## Inputs
 
-- Plan file path (optional - if not provided, uses most recent pending plan)
+- Work name (optional - defaults to "plan" if not provided)
 - `--no-review` flag (optional - skips auto-review)
+- Plan content from preceding conversation context
 
 ---
 
-## Step 0: Locate the Plan
+## Step 1: Extract Plan from Conversation
 
-### 0.1 Determine Plan Path
+### 1.1 Review Conversation Context
 
-Priority order:
-
-1. Explicit path from `"$ARGUMENTS"`
-2. Work name from `"$ARGUMENTS"` → find matching plan
-3. Most recent file in `.pilot/plan/pending/`
-
-```bash
-# Find most recent pending plan if no argument
-if [ -z "$PLAN_PATH" ]; then
-    PLAN_PATH="$(ls -1tr .pilot/plan/pending/*.md 2>/dev/null | head -1)"
-fi
-
-if [ -z "$PLAN_PATH" ]; then
-    echo "No pending plan found."
-    echo "Run /00_plan first to create a plan."
-    exit 1
-fi
-```
-
----
-
-## Step 1: Read and Validate Plan
-
-### 1.1 Read Plan Content
-
-Read the plan file and verify:
-- [ ] User Requirements section exists
-- [ ] Execution Plan with 5 phases exists
-- [ ] Acceptance Criteria defined
-- [ ] Test Plan included
+Look for the plan structure in the preceding conversation:
+- User Requirements section
+- PRP Analysis (What, Why, How, Success Criteria, Constraints)
+- Scope (In/Out)
+- Architecture
+- Execution Plan with phases
+- Acceptance Criteria
+- Test Plan
+- Risks & Mitigations
+- Open Questions
 
 ### 1.2 Validate Completeness
+
+Verify the plan contains:
+- [ ] User Requirements section exists
+- [ ] Execution Plan with phases exists
+- [ ] Acceptance Criteria defined
+- [ ] Test Plan included
 
 If any required sections are missing:
 - Inform user of missing sections
@@ -70,121 +73,179 @@ If any required sections are missing:
 
 ---
 
-## Step 2: Create In-Progress Workspace
+## Step 2: Generate Plan File Name
 
-### 2.1 Create RUN_ID
+### 2.1 Create Timestamp and Work Name
 
 ```bash
-PENDING_BASENAME="$(basename "$PLAN_PATH" .md)"
+mkdir -p .pilot/plan/pending
 
-# If already has timestamp prefix, reuse it
-if printf "%s" "$PENDING_BASENAME" | grep -qE '^[0-9]{8}_[0-9]{6}_'; then
-    RUN_ID="$PENDING_BASENAME"
-else
-    TS="$(date +%Y%m%d_%H%M%S)"
-    RUN_ID="${TS}_${PENDING_BASENAME}"
+# Extract work name from arguments or default to "plan"
+WORK_NAME="$(echo "$ARGUMENTS" | sed 's/--no-review//g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g' | head -c 50 | xargs)"
+
+if [ -z "$WORK_NAME" ]; then
+    WORK_NAME="plan"
 fi
 
-RUN_FILE=".pilot/plan/in_progress/${RUN_ID}.md"
-```
+# Create timestamp
+TS="$(date +%Y%m%d_%H%M%S)"
 
-### 2.2 Move Plan
-
-```bash
-mv "$PLAN_PATH" "$RUN_FILE"
-echo "Plan moved to: $RUN_FILE"
-```
-
-### 2.3 Record Active Pointer
-
-```bash
-mkdir -p .pilot/plan/active
-BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
-KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
-ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
-
-printf "%s" "$RUN_FILE" > "$ACTIVE_PTR"
-echo "Active plan recorded for branch: $BRANCH"
+# Generate filename
+PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 ```
 
 ---
 
-## Step 3: Auto-Review (Optional)
+## Step 3: Create Plan File in Pending/
+
+### 3.1 Plan Structure
+
+Create the plan file with the following structure:
+
+```markdown
+# {Work Name}
+
+- Generated at: {timestamp}
+- Work name: {work_name}
+- Location: {plan_path}
+
+## User Requirements
+
+[From conversation context]
+
+## PRP Analysis
+
+### What (Functionality)
+[From conversation]
+
+### Why (Context)
+[From conversation]
+
+### How (Approach)
+[From conversation]
+
+### Success Criteria
+[From conversation]
+
+### Constraints
+[From conversation]
+
+## Scope
+
+### In scope
+[From conversation]
+
+### Out of scope
+[From conversation]
+
+## Architecture
+
+### Data Structures
+[From conversation if applicable]
+
+### Module Boundaries
+[From conversation if applicable]
+
+## Execution Plan
+
+[Phase breakdown from conversation]
+
+## Acceptance Criteria
+
+[Checkbox list from conversation]
+
+## Test Plan
+
+[From conversation]
+
+## Risks & Mitigations
+
+[From conversation]
+
+## Open Questions
+
+[From conversation]
+```
+
+### 3.2 Write Plan File
+
+```bash
+cat > "$PLAN_FILE" << 'PLAN_EOF'
+[Content extracted from conversation]
+PLAN_EOF
+
+echo "Plan created: $PLAN_FILE"
+```
+
+---
+
+## Step 4: Auto-Review (Optional)
 
 > **Principle**: Plan validation before execution. No user intervention needed.
 
-### 3.1 Skip Check
+### 4.1 Skip Check
 
-If `"$ARGUMENTS"` contains `--no-review`, skip to Step 4.
+If `"$ARGUMENTS"` contains `--no-review`, skip to STOP section.
 
-### 3.2 Auto-Invoke Review
+### 4.2 Auto-Invoke Review
 
 Use Skill tool to invoke review:
 
 ```
 Skill: 90_review
-Args: (no args - auto-detect in-progress plan)
+Args: "$PLAN_FILE"
 ```
 
 This automatically:
-1. Loads the plan from `$RUN_FILE`
+1. Loads the plan from `$PLAN_FILE`
 2. Runs mandatory reviews
 3. Runs extended reviews by type
 4. Reports findings
 
-### 3.3 Review Results
+### 4.3 Review Results
 
 | Result | Action |
 |--------|--------|
-| Pass (Critical=0) | Ready for execution |
-| Needs Revision | Present issues, update plan |
-
----
-
-## Step 4: Create Todo List
-
-### 4.1 Generate Todos from Plan
-
-Parse the Execution Plan section and create actionable todos:
-
-```bash
-# Create todos based on plan phases
-# Each checkbox becomes a todo item
-```
-
-### 4.2 Todo Format
-
-```
-- Phase 1: Discovery & Alignment
-  - [ ] Identify relevant code paths
-  - [ ] Confirm integration points
-- Phase 2: Design
-  - [ ] Draft approach
-  - [ ] Define success validation
-...
-```
+| Pass (Critical=0) | Proceed to STOP |
+| Needs Revision | Present issues, update plan file |
 
 ---
 
 ## Success Criteria
 
-- Plan moved from `pending/` to `in_progress/{RUN_ID}.md`
-- Active pointer created for current branch
+- Plan file created in `.pilot/plan/pending/`
+- Plan content extracted from conversation context
 - Optional review completed
-- Ready for `/02_execute`
+- Execution NOT started
 
 ---
 
-## Next Command
+## STOP
 
 ```
-/02_execute
+═══════════════════════════════════════════════════════════
+  MANDATORY STOP - DO NOT PROCEED TO EXECUTION
+═══════════════════════════════════════════════════════════
+
+This command (/01_confirm) has completed the CONFIRMATION phase:
+✓ Plan file created in: .pilot/plan/pending/
+✓ No execution has started
+
+To execute this plan, run:
+
+    /02_execute
+
+This will:
+1. Move the plan from pending/ to in_progress/
+2. Create an active pointer for this branch
+3. Begin execution with TDD and Ralph Loop
+
+═══════════════════════════════════════════════════════════
 ```
 
 ---
 
 ## References
 
-- **Plan Template**: `.claude/templates/PRP.md.template`
 - **Context Engineering**: `.claude/guides/context-engineering.md`
 - **Ralph Loop TDD**: `.claude/guides/ralph-loop-tdd.md`
