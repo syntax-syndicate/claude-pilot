@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
 # claude-pilot Installer
-# One-line installation script for Claude Code preset
+# One-line installation/update script for Claude Code preset
+#
+# Usage:
+#   Install:   curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash
+#   Update:    curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- update
+#   Version:   curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- version
 
 set -e
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
 
 # Colors for output
 RED='\033[0;31m'
@@ -14,9 +23,24 @@ NC='\033[0m' # No Color
 # Version
 VERSION="1.0.0"
 
+# Remote repository URLs
+REPO_BASE="https://raw.githubusercontent.com/changoo89/claude-pilot/main"
+REPO_RAW="${REPO_BASE}"
+
+# Installation mode (install/update/version)
+MODE="${1:-install}"
+
+# Target directory (default: current directory)
+TARGET_DIR="$(pwd)"
+
+# =============================================================================
+# UTILITY FUNCTIONS
+# =============================================================================
+
 # Print banner
-echo -e "${BLUE}"
-cat << "EOF"
+print_banner() {
+    echo -e "${BLUE}"
+    cat << "EOF"
        _                 _                  _ _       _
    ___| | __ _ _   _  __| | ___       _ __ (_) | ___ | |_
   / __| |/ _` | | | |/ _` |/ _ \_____| '_ \| | |/ _ \| __|
@@ -25,9 +49,10 @@ cat << "EOF"
                                      |_|
                          Your Claude Code Copilot
 EOF
-echo -e "${NC}"
-echo -e "${GREEN}claude-pilot v${VERSION}${NC}"
-echo ""
+    echo -e "${NC}"
+    echo -e "${GREEN}claude-pilot v${VERSION}${NC}"
+    echo ""
+}
 
 # Function to print error and exit
 error_exit() {
@@ -51,207 +76,285 @@ warning() {
 }
 
 # Check if curl is available
-if ! command -v curl &> /dev/null; then
-    error_exit "curl is required but not installed. Please install curl first."
-fi
-
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Detect if running from cloned repo or via curl
-if [[ -f "${SCRIPT_DIR}/.claude/settings.json" ]]; then
-    # Running from cloned repo
-    TEMPLATE_DIR="${SCRIPT_DIR}"
-    info "Installing from local template: ${TEMPLATE_DIR}"
-else
-    # Running via curl - would need to download
-    error_exit "Please clone the repository first or use local installation"
-fi
-
-# Ask for language preference
-echo ""
-info "Select your preferred language:"
-echo "  1) English (en)"
-echo "  2) Korean (ko)"
-echo "  3) Japanese (ja)"
-echo ""
-read -p "Enter choice [1-3] (default: 1): " lang_choice
-lang_choice=${lang_choice:-1}
-
-case $lang_choice in
-    1) LANGUAGE="en"; success "Language: English";;
-    2) LANGUAGE="ko"; success "Language: Korean";;
-    3) LANGUAGE="ja"; success "Language: Japanese";;
-    *) warning "Invalid choice, defaulting to English"; LANGUAGE="en";;
-esac
-
-# Ask for installation directory
-echo ""
-read -p "Install to current directory? [Y/n]: " install_current
-install_current=${install_current:-Y}
-
-if [[ "$install_current" =~ ^[Yy]$ ]]; then
-    TARGET_DIR="$(pwd)"
-else
-    read -p "Enter installation directory: " TARGET_DIR
-    if [[ ! -d "$TARGET_DIR" ]]; then
-        error_exit "Directory does not exist: $TARGET_DIR"
+check_curl() {
+    if ! command -v curl &> /dev/null; then
+        error_exit "curl is required but not installed. Please install curl first."
     fi
-fi
-
-success "Installing to: ${TARGET_DIR}"
-
-# Ask about components
-echo ""
-info "Select components to install:"
-read -p "Include commands? [Y/n]: " include_commands
-include_commands=${include_commands:-Y}
-
-read -p "Include hooks? [Y/n]: " include_hooks
-include_hooks=${include_hooks:-Y}
-
-read -p "Include guides? [Y/n]: " include_guides
-include_guides=${include_guides:-Y}
-
-read -p "Include templates? [Y/n]: " include_templates
-include_templates=${include_templates:-Y}
-
-# Create .claude directory if it doesn't exist
-CLAUDE_DIR="${TARGET_DIR}/.claude"
-if [[ -d "$CLAUDE_DIR" ]]; then
-    warning ".claude directory already exists. Backing up..."
-    BACKUP_DIR="${CLAUDE_DIR}.backup.$(date +%Y%m%d_%H%M%S)"
-    mv "$CLAUDE_DIR" "$BACKUP_DIR"
-    success "Backed up to: ${BACKUP_DIR}"
-fi
-
-mkdir -p "$CLAUDE_DIR"
-success "Created .claude directory"
-
-# Copy settings.json and update language
-info "Configuring settings.json..."
-if [[ -f "${TEMPLATE_DIR}/.claude/settings.json" ]]; then
-    cp "${TEMPLATE_DIR}/.claude/settings.json" "${CLAUDE_DIR}/settings.json"
-    # Update language using jq if available, otherwise sed
-    if command -v jq &> /dev/null; then
-        jq ".language = \"${LANGUAGE}\"" "${CLAUDE_DIR}/settings.json" > "${CLAUDE_DIR}/settings.json.tmp"
-        mv "${CLAUDE_DIR}/settings.json.tmp" "${CLAUDE_DIR}/settings.json"
-    else
-        sed -i.bak "s/\"language\": \"[^\"]*\"/\"language\": \"${LANGUAGE}\"/" "${CLAUDE_DIR}/settings.json"
-        rm -f "${CLAUDE_DIR}/settings.json.bak"
-    fi
-    success "Configured language: ${LANGUAGE}"
-else
-    warning "settings.json not found in template, creating default..."
-    cat > "${CLAUDE_DIR}/settings.json" << EOF
-{
-  "language": "${LANGUAGE}",
-  "alwaysThinkingEnabled": true,
-  "enableAllProjectMcpServers": true,
-  "permissions": {
-    "allow": [
-      "Bash(npm:*)",
-      "Bash(git:*)",
-      "Bash(ls:*)",
-      "Bash(cat:*)",
-      "Bash(grep:*)",
-      "Read",
-      "Write",
-      "Edit"
-    ],
-    "deny": ["Bash(sudo:*)"]
-  }
 }
-EOF
-fi
 
-# Copy commands
-if [[ "$include_commands" =~ ^[Yy]$ ]]; then
-    info "Installing commands..."
-    mkdir -p "${CLAUDE_DIR}/commands"
-    if [[ -d "${TEMPLATE_DIR}/.claude/commands" ]]; then
-        cp -r "${TEMPLATE_DIR}/.claude/commands/"* "${CLAUDE_DIR}/commands/" 2>/dev/null || true
-        success "Commands installed"
+# =============================================================================
+# FILE OWNERSHIP DEFINITION
+# =============================================================================
+
+# Files managed by claude-pilot (overwritten on update)
+# Format: "source_path:dest_path"
+declare -a MANAGED_FILES=(
+    # Commands (0x and 9x prefix only - claude-pilot core)
+    ".claude/commands/00_plan.md:.claude/commands/00_plan.md"
+    ".claude/commands/01_confirm.md:.claude/commands/01_confirm.md"
+    ".claude/commands/02_execute.md:.claude/commands/02_execute.md"
+    ".claude/commands/03_close.md:.claude/commands/03_close.md"
+    ".claude/commands/90_review.md:.claude/commands/90_review.md"
+    ".claude/commands/91_document.md:.claude/commands/91_document.md"
+    # Guides
+    ".claude/guides/context-engineering.md:.claude/guides/context-engineering.md"
+    ".claude/guides/ralph-loop-tdd.md:.claude/guides/ralph-loop-tdd.md"
+    # Templates
+    ".claude/templates/PRP.md.template:.claude/templates/PRP.md.template"
+    ".claude/templates/CONTEXT.md.template:.claude/templates/CONTEXT.md.template"
+    ".claude/templates/SKILL.md.template:.claude/templates/SKILL.md.template"
+    # Hooks
+    ".claude/scripts/hooks/typecheck.sh:.claude/scripts/hooks/typecheck.sh"
+    ".claude/scripts/hooks/lint.sh:.claude/scripts/hooks/lint.sh"
+    ".claude/scripts/hooks/check-todos.sh:.claude/scripts/hooks/check-todos.sh"
+    ".claude/scripts/hooks/branch-guard.sh:.claude/scripts/hooks/branch-guard.sh"
+    # Version file
+    ".claude/.pilot-version:.claude/.pilot-version"
+)
+
+# User-owned files (never overwritten)
+declare -a USER_FILES=(
+    "CLAUDE.md"
+    "AGENTS.md"
+    ".pilot"
+    ".claude/settings.json"
+    ".claude/local"
+)
+
+# =============================================================================
+# REMOTE DOWNLOAD FUNCTIONS
+# =============================================================================
+
+# Download a single file from remote repository
+download_file() {
+    local src_path="$1"
+    local dest_path="$2"
+    local dest_full="${TARGET_DIR}/${dest_path}"
+
+    # Create directory if needed
+    local dest_dir="$(dirname "${dest_full}")"
+    mkdir -p "${dest_dir}"
+
+    # Download file
+    local url="${REPO_RAW}/${src_path}"
+    if curl -fsSL "${url}" -o "${dest_full}" 2>/dev/null; then
+        return 0
+    else
+        return 1
     fi
-fi
+}
 
-# Copy hooks
-if [[ "$include_hooks" =~ ^[Yy]$ ]]; then
-    info "Installing hooks..."
-    mkdir -p "${CLAUDE_DIR}/scripts/hooks"
-    if [[ -d "${TEMPLATE_DIR}/.claude/scripts/hooks" ]]; then
-        cp -r "${TEMPLATE_DIR}/.claude/scripts/hooks/"* "${CLAUDE_DIR}/scripts/hooks/" 2>/dev/null || true
-        # Make hooks executable
-        chmod +x "${CLAUDE_DIR}/scripts/hooks/"*.sh 2>/dev/null || true
-        success "Hooks installed"
+# Download all managed files
+download_managed_files() {
+    info "Downloading claude-pilot managed files..."
+
+    local success_count=0
+    local fail_count=0
+
+    for entry in "${MANAGED_FILES[@]}"; do
+        local src_path="${entry%%:*}"
+        local dest_path="${entry#*:}"
+
+        if download_file "${src_path}" "${dest_path}"; then
+            success_count=$((success_count + 1))
+        else
+            fail_count=$((fail_count + 1))
+            warning "Failed to download: ${src_path}"
+        fi
+    done
+
+    info "Downloaded: ${success_count} files"
+    if [[ ${fail_count} -gt 0 ]]; then
+        warning "Failed: ${fail_count} files"
     fi
-fi
 
-# Copy guides
-if [[ "$include_guides" =~ ^[Yy]$ ]]; then
-    info "Installing guides..."
-    mkdir -p "${CLAUDE_DIR}/guides"
-    if [[ -d "${TEMPLATE_DIR}/.claude/guides" ]]; then
-        cp -r "${TEMPLATE_DIR}/.claude/guides/"* "${CLAUDE_DIR}/guides/" 2>/dev/null || true
-        success "Guides installed"
+    return ${fail_count}
+}
+
+# =============================================================================
+# LOCAL INSTALLATION FUNCTIONS
+# =============================================================================
+
+# Install from local template directory
+install_from_local() {
+    local template_dir="$1"
+
+    info "Installing from local template: ${template_dir}"
+
+    # Copy managed files
+    for entry in "${MANAGED_FILES[@]}"; do
+        local src_path="${entry%%:*}"
+        local dest_path="${entry#*:}"
+        local src_full="${template_dir}/${src_path}"
+        local dest_full="${TARGET_DIR}/${dest_path}"
+
+        if [[ -f "${src_full}" ]]; then
+            mkdir -p "$(dirname "${dest_full}")"
+            cp "${src_full}" "${dest_full}"
+        fi
+    done
+
+    success "Copied managed files from local template"
+}
+
+# =============================================================================
+# VERSION FUNCTIONS
+# =============================================================================
+
+# Get current installed version
+get_current_version() {
+    if [[ -f "${TARGET_DIR}/.claude/.pilot-version" ]]; then
+        cat "${TARGET_DIR}/.claude/.pilot-version"
+    else
+        echo "none"
     fi
-fi
+}
 
-# Copy templates
-if [[ "$include_templates" =~ ^[Yy]$ ]]; then
-    info "Installing templates..."
-    mkdir -p "${CLAUDE_DIR}/templates"
-    if [[ -d "${TEMPLATE_DIR}/.claude/templates" ]]; then
-        cp -r "${TEMPLATE_DIR}/.claude/templates/"* "${CLAUDE_DIR}/templates/" 2>/dev/null || true
-        success "Templates installed"
+# Save version to file
+save_version() {
+    echo "${VERSION}" > "${TARGET_DIR}/.claude/.pilot-version"
+}
+
+# Show version information
+show_version() {
+    local current_version=$(get_current_version)
+    echo "claude-pilot version information:"
+    echo "  Latest:  ${VERSION}"
+    echo "  Current: ${current_version}"
+
+    if [[ "${current_version}" == "${VERSION}" ]]; then
+        echo ""
+        success "You are running the latest version!"
+        exit 0
     fi
-fi
+}
 
-# Copy main documentation files
-info "Installing documentation..."
-if [[ -f "${TEMPLATE_DIR}/CLAUDE.md" ]]; then
-    cp "${TEMPLATE_DIR}/CLAUDE.md" "${TARGET_DIR}/CLAUDE.md"
-    success "CLAUDE.md installed"
-fi
+# =============================================================================
+# MODE HANDLERS
+# =============================================================================
 
-if [[ -f "${TEMPLATE_DIR}/AGENTS.md" ]]; then
-    cp "${TEMPLATE_DIR}/AGENTS.md" "${TARGET_DIR}/AGENTS.md"
-    success "AGENTS.md installed"
-fi
+# Handle install mode
+do_install() {
+    print_banner
 
-# Copy mcp.json if exists
-if [[ -f "${TEMPLATE_DIR}/mcp.json" ]]; then
-    cp "${TEMPLATE_DIR}/mcp.json" "${TARGET_DIR}/mcp.json"
-    success "mcp.json installed"
-fi
+    # Detect if running from cloned repo or via curl
+    local SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Create .pilot directory for plan management
-info "Creating .pilot directory..."
-mkdir -p "${TARGET_DIR}/.pilot/plan/pending"
-mkdir -p "${TARGET_DIR}/.pilot/plan/in_progress"
-mkdir -p "${TARGET_DIR}/.pilot/plan/done"
-mkdir -p "${TARGET_DIR}/.pilot/plan/active"
-success ".pilot directory created"
+    if [[ -f "${SCRIPT_DIR}/.claude/settings.json" ]]; then
+        # Running from cloned repo
+        install_from_local "${SCRIPT_DIR}"
+    else
+        # Running via curl - download from remote
+        info "Installing from remote repository..."
+        if ! download_managed_files; then
+            error_exit "Failed to download some files. Please check your internet connection."
+        fi
+    fi
 
-# Summary
-echo ""
-echo -e "${GREEN}======================================================${NC}"
-echo -e "${GREEN}Installation Complete!${NC}"
-echo -e "${GREEN}======================================================${NC}"
-echo ""
-info "Summary:"
-echo "  Language: ${LANGUAGE}"
-echo "  Target: ${TARGET_DIR}"
-echo "  Settings: ${CLAUDE_DIR}/settings.json"
-echo ""
-info "Next Steps:"
-echo "  1. Review CLAUDE.md and customize for your project"
-echo "  2. Test: /00_plan 'test feature'"
-echo "  3. Start building with /02_execute"
-echo ""
-info "Documentation:"
-echo "  - Context Engineering: .claude/guides/context-engineering.md"
-echo "  - Ralph Loop TDD: .claude/guides/ralph-loop-tdd.md"
-echo ""
-success "Happy coding with claude-pilot!"
-echo ""
+    # Create .pilot directory structure
+    info "Creating .pilot directory structure..."
+    mkdir -p "${TARGET_DIR}/.pilot/plan/pending"
+    mkdir -p "${TARGET_DIR}/.pilot/plan/in_progress"
+    mkdir -p "${TARGET_DIR}/.pilot/plan/done"
+    mkdir -p "${TARGET_DIR}/.pilot/plan/active"
+    success ".pilot directory created"
+
+    # Save version
+    save_version
+    success "Version ${VERSION} installed"
+
+    # Summary
+    echo ""
+    echo -e "${GREEN}======================================================${NC}"
+    echo -e "${GREEN}Installation Complete!${NC}"
+    echo -e "${GREEN}======================================================${NC}"
+    echo ""
+    info "Summary:"
+    echo "  Version: ${VERSION}"
+    echo "  Target: ${TARGET_DIR}"
+    echo ""
+    info "Next Steps:"
+    echo "  1. Review CLAUDE.md and customize for your project"
+    echo "  2. Test: /00_plan 'test feature'"
+    echo "  3. Start building with /02_execute"
+    echo ""
+    success "Happy coding with claude-pilot!"
+    echo ""
+}
+
+# Handle update mode
+do_update() {
+    print_banner
+
+    local current_version=$(get_current_version)
+
+    if [[ "${current_version}" == "${VERSION}" ]]; then
+        success "Already up to date (v${VERSION})"
+        exit 0
+    fi
+
+    info "Updating from v${current_version} to v${VERSION}..."
+
+    # Backup existing installation
+    if [[ -d "${TARGET_DIR}/.claude" ]]; then
+        local backup_dir="${TARGET_DIR}/.claude.backup.$(date +%Y%m%d_%H%M%S)"
+        warning "Creating backup: ${backup_dir}"
+        cp -r "${TARGET_DIR}/.claude" "${backup_dir}"
+    fi
+
+    # Download managed files only (user files preserved)
+    info "Updating claude-pilot managed files..."
+    if ! download_managed_files; then
+        error_exit "Failed to download some files. Please check your internet connection."
+    fi
+
+    # Save version
+    save_version
+    success "Updated to version ${VERSION}"
+
+    echo ""
+    info "Updated files:"
+    echo "  - Commands (00-03, 90-91)"
+    echo "  - Guides"
+    echo "  - Templates"
+    echo "  - Hooks"
+    echo ""
+    info "Preserved files (your changes):"
+    echo "  - CLAUDE.md"
+    echo "  - AGENTS.md"
+    echo "  - .pilot/"
+    echo "  - .claude/settings.json"
+    echo "  - Custom commands"
+    echo ""
+    success "Update complete!"
+}
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+main() {
+    check_curl
+
+    case "${MODE}" in
+        install)
+            do_install
+            ;;
+        update)
+            do_update
+            ;;
+        version|--version|-v)
+            print_banner
+            show_version
+            ;;
+        *)
+            error_exit "Unknown mode: ${MODE}
+Usage:
+  curl ... | bash                    # Install
+  curl ... | bash -s -- update       # Update
+  curl ... | bash -s -- version      # Show version"
+            ;;
+    esac
+}
+
+main

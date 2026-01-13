@@ -7,7 +7,10 @@
 ## Quick Start
 
 ```bash
-# Clone and install
+# One-line install (curl)
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash
+
+# Or clone and install
 git clone https://github.com/changoo89/claude-pilot.git
 cd claude-pilot
 ./install.sh
@@ -109,21 +112,39 @@ Automation at key points:
 
 ## Installation
 
-### Option 1: One-line Install
+### Option 1: One-line Install (Recommended)
+
+```bash
+# Install to current directory
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash
+
+# Update existing installation
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- update
+
+# Check version
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- version
+```
+
+**Why curl?**
+- No git clone required
+- Single command installation
+- Safe updates that preserve your customizations
+- Works in any directory
+
+The installer will:
+1. Download claude-pilot core files
+2. Create `.claude/` directory structure
+3. Set up `.pilot/` for plan management
+4. Initialize version tracking
+
+### Option 2: Clone and Install
 
 ```bash
 git clone https://github.com/changoo89/claude-pilot.git
 cd claude-pilot && ./install.sh
 ```
 
-The installer will:
-1. Detect your project type
-2. Ask for language preference (en/ko/ja)
-3. Copy template files
-4. Configure hooks for your stack
-5. Set up recommended MCPs
-
-### Option 2: Manual Install
+### Option 3: Manual Install
 
 ```bash
 # Clone the template
@@ -138,6 +159,30 @@ cp AGENTS.md /path/to/your/project/
 # Edit CLAUDE.md with your project info
 nano /path/to/your/project/CLAUDE.md
 ```
+
+---
+
+## Updates
+
+claude-pilot supports safe updates that preserve your customizations:
+
+```bash
+# Update to latest version
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- update
+```
+
+**What gets updated:**
+- Core commands (00_plan, 01_confirm, 02_execute, 03_close, 90_review, 91_document)
+- Guides and templates
+- Hooks scripts
+- Version tracking
+
+**What gets preserved:**
+- Your `CLAUDE.md` customizations
+- Your `AGENTS.md` configuration
+- Your `.pilot/` plans and data
+- Your `.claude/settings.json` settings
+- Custom commands you've added
 
 ---
 

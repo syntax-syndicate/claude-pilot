@@ -4,19 +4,33 @@ Welcome to **claude-pilot**! This guide will help you get up and running quickly
 
 ## Quick Install
 
+### Option 1: One-line Install (Recommended)
+
+```bash
+# Install to current directory
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash
+
+# Update existing installation
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- update
+
+# Check version
+curl -fsSL https://raw.githubusercontent.com/changoo89/claude-pilot/main/install.sh | bash -s -- version
+```
+
+The installer will:
+1. Download claude-pilot core files from GitHub
+2. Create `.claude/` directory with commands, guides, templates
+3. Create `.pilot/` directory for plan management
+4. Initialize version tracking
+
+### Option 2: Clone and Install
+
 ```bash
 # Clone and run installer
 git clone https://github.com/changoo89/claude-pilot.git
 cd claude-pilot
 ./install.sh
 ```
-
-The installer will:
-1. Backup your existing `.claude/` folder (if it exists)
-2. Ask you to select a language (en/ko/ja)
-3. Ask which components to install
-4. Copy the template files to your project
-5. Create `.pilot/` directory for plan management
 
 ## Manual Install
 
