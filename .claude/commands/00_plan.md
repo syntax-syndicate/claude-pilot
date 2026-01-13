@@ -14,6 +14,8 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 - **SPEC-First**: Requirements, success criteria, test scenarios BEFORE implementation.
 - **Collaborative**: Dialogue with user to clarify ambiguities.
 
+> **⚠️ LANGUAGE - PLAN OUTPUT**: All plan documents MUST be written in English, regardless of conversation language. This includes plan summaries, PRP analysis, success criteria, test scenarios, and all content in the plan file.
+
 > **⚠️ CRITICAL**: DO NOT start implementation during /00_plan.
 > - ❌ NO code editing, test writing, or file creation
 > - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning, Dialogue

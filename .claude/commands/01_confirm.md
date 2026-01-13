@@ -20,6 +20,9 @@ _Extract plan from conversation, create plan file in pending/, and STOP._
 - **Context-Driven**: Extract plan from preceding conversation
 - **Standalone Output**: Created plan file must be sufficient for execution
 - **Executable**: Include concrete steps, commands, checklists
+- **English Only**: Plan file content MUST be in English, regardless of conversation language
+
+> **⚠️ LANGUAGE - PLAN FILE**: The plan file MUST be written in English. Extract and translate any non-English content from the conversation into English before writing to the plan file.
 
 ---
 
@@ -54,6 +57,8 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 ---
 
 ## Step 3: Create Plan File
+
+> **⚠️ ENGLISH OUTPUT REQUIRED**: All content written to the plan file MUST be in English. If the conversation was in another language, translate all content before writing to the file.
 
 ### 3.1 Structure
 ```markdown

@@ -153,3 +153,37 @@ None - requirements are clear.
 2. **[Suggestion] Architecture - Directive Placement**
    - Issue: Directive should be prominent
    - Applied: Place directive near top of each file, after Core Philosophy section
+
+---
+
+## Execution Summary
+
+### Changes Made
+
+**Phase 1: Modified `00_plan.md`**
+- Added language directive to Core Philosophy section (line 17)
+- Directive: `> **⚠️ LANGUAGE - PLAN OUTPUT**: All plan documents MUST be written in English, regardless of conversation language.`
+
+**Phase 2: Modified `01_confirm.md`**
+- Added "English Only" to Core Philosophy bullet list (line 23)
+- Added language directive callout in Core Philosophy (line 25)
+- Added English output requirement in Step 3 before file creation (line 61)
+
+**Phase 3: Verification**
+- All directives use consistent `⚠️` callout format
+- Directives are prominently placed at the top of each file
+- Language is clear and imperative ("MUST be written in English")
+- Three-layer reinforcement: Core Philosophy (00_plan), Core Philosophy (01_confirm), Step 3 (01_confirm)
+
+### Acceptance Criteria Status
+- [x] `00_plan.md` contains explicit English language directive
+- [x] `01_confirm.md` contains explicit English output requirement
+- [x] Directives are prominently placed and clearly worded
+- [x] No other functionality is affected
+
+### Files Modified
+- `.claude/commands/00_plan.md` (1 insertion)
+- `.claude/commands/01_confirm.md` (2 insertions)
+
+### Follow-ups
+- Manual verification: Run `/00_plan` in Korean, then `/01_confirm` to confirm plan file is in English
