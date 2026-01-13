@@ -85,15 +85,14 @@ else
     RUN_ID="${TS}_${PENDING_BASENAME}"
 fi
 
-RUN_DIR=".pilot/plan/in_progress/${RUN_ID}"
-mkdir -p "$RUN_DIR"
+RUN_FILE=".pilot/plan/in_progress/${RUN_ID}.md"
 ```
 
 ### 2.2 Move Plan
 
 ```bash
-mv "$PLAN_PATH" "$RUN_DIR/plan.md"
-echo "Plan moved to: $RUN_DIR/plan.md"
+mv "$PLAN_PATH" "$RUN_FILE"
+echo "Plan moved to: $RUN_FILE"
 ```
 
 ### 2.3 Record Active Pointer
@@ -104,7 +103,7 @@ BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
 KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
 ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
 
-printf "%s" "$RUN_DIR" > "$ACTIVE_PTR"
+printf "%s" "$RUN_FILE" > "$ACTIVE_PTR"
 echo "Active plan recorded for branch: $BRANCH"
 ```
 
@@ -128,7 +127,7 @@ Args: (no args - auto-detect in-progress plan)
 ```
 
 This automatically:
-1. Loads the plan from `$RUN_DIR/plan.md`
+1. Loads the plan from `$RUN_FILE`
 2. Runs mandatory reviews
 3. Runs extended reviews by type
 4. Reports findings
@@ -169,7 +168,7 @@ Parse the Execution Plan section and create actionable todos:
 
 ## Success Criteria
 
-- Plan moved from `pending/` to `in_progress/{RUN_ID}/plan.md`
+- Plan moved from `pending/` to `in_progress/{RUN_ID}.md`
 - Active pointer created for current branch
 - Optional review completed
 - Ready for `/02_execute`

@@ -36,13 +36,25 @@ ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
 Priority order:
 
 1. Explicit path from `"$ARGUMENTS"`
-2. RUN_ID from `"$ARGUMENTS"` → `.pilot/plan/in_progress/{RUN_ID}/plan.md`
-3. Read from `ACTIVE_PTR`
+2. RUN_ID from `"$ARGUMENTS"` → try both file and folder formats:
+   - New: `.pilot/plan/in_progress/{RUN_ID}.md`
+   - Old: `.pilot/plan/in_progress/{RUN_ID}/plan.md`
+3. Read from `ACTIVE_PTR` (may be file or folder path)
 
 ```bash
 if [ -f "$ACTIVE_PTR" ]; then
-    RUN_DIR="$(cat "$ACTIVE_PTR")"
-    ACTIVE_PLAN_PATH="$RUN_DIR/plan.md"
+    ACTIVE_PLAN_PATH="$(cat "$ACTIVE_PTR")"
+fi
+
+# If explicit RUN_ID provided, try both formats
+if [ -z "$ACTIVE_PLAN_PATH" ] && [ -n "$RUN_ID" ]; then
+    # Try new file format first
+    if [ -f ".pilot/plan/in_progress/${RUN_ID}.md" ]; then
+        ACTIVE_PLAN_PATH=".pilot/plan/in_progress/${RUN_ID}.md"
+    # Fallback to old folder format
+    elif [ -f ".pilot/plan/in_progress/${RUN_ID}/plan.md" ]; then
+        ACTIVE_PLAN_PATH=".pilot/plan/in_progress/${RUN_ID}/plan.md"
+    fi
 fi
 
 if [ -z "$ACTIVE_PLAN_PATH" ] || [ ! -f "$ACTIVE_PLAN_PATH" ]; then
@@ -88,15 +100,24 @@ mkdir -p .pilot/plan/done
 ### 2.2 Generate Archive Name
 
 ```bash
-RUN_ID="$(basename "$(dirname "$ACTIVE_PLAN_PATH")")"
-DONE_DIR=".pilot/plan/done/${RUN_ID}"
-
-if [ -e "$DONE_DIR" ]; then
-    TS="$(date +%Y%m%d_%H%M%S)"
-    DONE_DIR=".pilot/plan/done/${RUN_ID}_closed_${TS}"
+# Extract RUN_ID from plan path (handle both file and folder formats)
+if printf "%s" "$ACTIVE_PLAN_PATH" | grep -q '/plan.md$'; then
+    # Old folder format: in_progress/{RUN_ID}/plan.md
+    RUN_ID="$(basename "$(dirname "$ACTIVE_PLAN_PATH")")"
+    IS_FOLDER_FORMAT=true
+else
+    # New file format: in_progress/{RUN_ID}.md
+    RUN_ID="$(basename "$ACTIVE_PLAN_PATH" .md)"
+    IS_FOLDER_FORMAT=false
 fi
 
-mkdir -p "$DONE_DIR"
+DONE_PATH=".pilot/plan/done/${RUN_ID}.md"
+
+# Handle naming conflicts
+if [ -e "$DONE_PATH" ]; then
+    TS="$(date +%Y%m%d_%H%M%S)"
+    DONE_PATH=".pilot/plan/done/${RUN_ID}_closed_${TS}.md"
+fi
 ```
 
 ---
@@ -104,16 +125,29 @@ mkdir -p "$DONE_DIR"
 ## Step 3: Move Plan to Done
 
 ```bash
-mv "$(dirname "$ACTIVE_PLAN_PATH")" "$DONE_DIR"
-echo "Plan archived to: $DONE_DIR"
+if [ "$IS_FOLDER_FORMAT" = true ]; then
+    # Old folder format: move the entire folder
+    DONE_DIR=".pilot/plan/done/${RUN_ID}"
+    if [ -e "$DONE_DIR" ]; then
+        TS="$(date +%Y%m%d_%H%M%S)"
+        DONE_DIR=".pilot/plan/done/${RUN_ID}_closed_${TS}"
+    fi
+    mv "$(dirname "$ACTIVE_PLAN_PATH")" "$DONE_DIR"
+    echo "Plan archived to: $DONE_DIR"
+else
+    # New file format: just move the file
+    mv "$ACTIVE_PLAN_PATH" "$DONE_PATH"
+    echo "Plan archived to: $DONE_PATH"
+fi
 ```
 
 ### 3.1 Clean Active Pointer
 
 ```bash
 if [ -f "$ACTIVE_PTR" ]; then
-    PTR_DIR="$(cat "$ACTIVE_PTR")"
-    if [ "$PTR_DIR" = "$(dirname "$ACTIVE_PLAN_PATH")" ]; then
+    PTR_CONTENT="$(cat "$ACTIVE_PTR")"
+    # Check if pointer references this plan (both formats)
+    if [ "$PTR_CONTENT" = "$ACTIVE_PLAN_PATH" ] || [ "$PTR_CONTENT" = "$(dirname "$ACTIVE_PLAN_PATH")" ]; then
         rm -f "$ACTIVE_PTR"
         echo "Active pointer cleared"
     fi
@@ -125,6 +159,17 @@ fi
 ## Step 4: Create Git Commit (Optional)
 
 > **Skip if `"$ARGUMENTS"` contains `no-commit`**
+
+### 4.0 Check Git Repository
+
+```bash
+# Check if this is a git repository
+if ! git rev-parse --git-dir > /dev/null 2>&1; then
+    echo "Not a git repository. Skipping commit step."
+    echo "Plan has been archived successfully."
+    exit 0
+fi
+```
 
 ### 4.1 Check Preconditions
 
@@ -183,9 +228,9 @@ EOF
 
 ## Success Criteria
 
-- Plan moved from `in_progress/` to `done/`
+- Plan moved from `in_progress/` to `done/` (file-based or folder-based)
 - Archived plan includes acceptance criteria and evidence
-- Git commit created (unless `no-commit` specified)
+- Git commit created if git repo (skipped if not a git repository)
 
 ---
 
