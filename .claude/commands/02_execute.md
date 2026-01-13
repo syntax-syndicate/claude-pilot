@@ -110,17 +110,17 @@ if is_worktree_mode "$@"; then
     echo "🌿 Branch: $BRANCH_NAME"
     echo "📝 Plan: $IN_PROGRESS_PLAN"
     echo ""
-    echo "⚠️  IMPORTANT: You must change to the worktree directory to continue:"
-    echo ""
-    echo "    cd $WORKTREE_ABS"
-    echo ""
-    echo "Then run /02_execute again (without --wt) to start working on the plan."
+    echo "🔄 Continuing execution in worktree directory..."
     echo ""
     echo "When done, run /03_close from the worktree to squash merge and cleanup."
     echo ""
 
-    # Exit here - user needs to cd to worktree
-    exit 0
+    # Update PLAN_PATH to point to the worktree location
+    PLAN_PATH="$IN_PROGRESS_PLAN"
+
+    # Change to worktree directory and continue execution
+    # Claude Code will use this as the new working directory
+    cd "$WORKTREE_ABS" || exit 1
 fi
 ```
 

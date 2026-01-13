@@ -21,12 +21,12 @@ select_oldest_pending() {
 
 # Convert plan filename to branch name
 # Usage: branch=$(plan_to_branch "20260113_160000_worktree_support.md")
-# Returns: branch name like "feature/20260113-worktree-support"
+# Returns: branch name like "feature/20260113-160000-worktree-support"
 plan_to_branch() {
     local plan_file="$1"
     plan_file="$(basename "$plan_file" .md)"
-    # 20260113_160000_worktree_support → feature/20260113-worktree-support
-    printf "feature/%s" "$plan_file" | sed 's/_[0-9]\{6\}_/-/; s/_/-/g'
+    # 20260113_160000_worktree_support → feature/20260113-160000-worktree-support
+    printf "feature/%s" "$plan_file" | sed 's/_/-/g'
 }
 
 # Create a Git worktree for parallel execution
