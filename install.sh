@@ -21,7 +21,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Version
-VERSION="1.4.0"
+VERSION="1.5.0"
 
 # Remote repository URLs
 REPO_BASE="https://raw.githubusercontent.com/changoo89/claude-pilot/main"
@@ -189,6 +189,12 @@ declare -a USER_FILES=(
     ".claude/local"
 )
 
+# Deprecated files (removed in newer versions - will be deleted on update)
+declare -a DEPRECATED_FILES=(
+    ".claude/templates/PRP.md.template"
+    # Add more as versions evolve
+)
+
 # =============================================================================
 # REMOTE DOWNLOAD FUNCTIONS
 # =============================================================================
@@ -263,6 +269,50 @@ install_from_local() {
     done
 
     success "Copied managed files from local template"
+}
+
+# =============================================================================
+# CLEANUP FUNCTIONS
+# =============================================================================
+
+# Remove deprecated files from previous versions
+cleanup_deprecated_files() {
+    local removed_count=0
+    local removed_files=()
+
+    for file_path in "${DEPRECATED_FILES[@]}"; do
+        local full_path="${TARGET_DIR}/${file_path}"
+        if [[ -f "${full_path}" ]]; then
+            rm -f "${full_path}"
+            removed_files+=("${file_path}")
+            removed_count=$((removed_count + 1))
+        fi
+    done
+
+    if [[ ${removed_count} -gt 0 ]]; then
+        info "Removed deprecated files:"
+        for file in "${removed_files[@]}"; do
+            echo "  - ${file}"
+        done
+    fi
+
+    return 0
+}
+
+# Remove backup directory after successful update
+cleanup_backup() {
+    local backup_path="$1"
+
+    if [[ -z "${backup_path}" ]]; then
+        return 0
+    fi
+
+    if [[ -d "${backup_path}" ]]; then
+        rm -rf "${backup_path}"
+        success "Backup directory removed: ${backup_path}"
+    fi
+
+    return 0
 }
 
 # =============================================================================
@@ -393,8 +443,9 @@ do_update() {
     info "Updating from v${current_version} to v${VERSION}..."
 
     # Backup existing installation
+    local backup_dir=""
     if [[ -d "${TARGET_DIR}/.claude" ]]; then
-        local backup_dir="${TARGET_DIR}/.claude.backup.$(date +%Y%m%d_%H%M%S)"
+        backup_dir="${TARGET_DIR}/.claude.backup.$(date +%Y%m%d_%H%M%S)"
         warning "Creating backup: ${backup_dir}"
         cp -r "${TARGET_DIR}/.claude" "${backup_dir}"
     fi
@@ -404,6 +455,14 @@ do_update() {
     if ! download_managed_files; then
         error_exit "Failed to download some files. Please check your internet connection."
     fi
+
+    # Cleanup: remove backup after successful update
+    if [[ -n "${backup_dir}" ]]; then
+        cleanup_backup "${backup_dir}"
+    fi
+
+    # Cleanup: remove deprecated files
+    cleanup_deprecated_files
 
     # Save version
     save_version
