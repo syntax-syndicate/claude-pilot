@@ -105,8 +105,11 @@ select_language() {
         read -p "Select [1-3, default=1]: " choice
     else
         # Running via pipe, try /dev/tty
-        if [[ -e /dev/tty ]]; then
-            read -p "Select [1-3, default=1]: " choice < /dev/tty
+        if [[ -c /dev/tty ]] 2>/dev/null; then
+            read -p "Select [1-3, default=1]: " choice < /dev/tty 2>/dev/null || {
+                info "Non-interactive mode, using default language: en"
+                return
+            }
         else
             info "Non-interactive mode, using default language: en"
             return
