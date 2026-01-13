@@ -1,6 +1,6 @@
 ---
 description: Execute the current in-progress plan with Ralph Loop TDD pattern
-argument-hint: "[--no-docs] - optional flag to skip auto-documentation"
+argument-hint: "[--no-docs] [--wt] - optional flags: --no-docs skips auto-documentation, --wt enables worktree mode"
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash(*), AskUserQuestion
 ---
 
@@ -19,9 +19,116 @@ _Execute the current in-progress plan using Ralph Loop TDD pattern - iterate unt
 
 ---
 
-## Step 0: Select the Plan to Execute
+## Step 0: Source Worktree Utilities
 
-### 0.1 Determine Plan Path
+```bash
+# Source worktree utility functions
+WORKTREE_UTILS=".claude/scripts/worktree-utils.sh"
+if [ -f "$WORKTREE_UTILS" ]; then
+    . "$WORKTREE_UTILS"
+else
+    echo "Warning: Worktree utilities not found at $WORKTREE_UTILS"
+fi
+```
+
+---
+
+## Step 1.5: Worktree Mode (--wt flag)
+
+> **When to use**: When you want to work in a parallel isolated environment using Git worktrees.
+
+### 0.5.1 Check for Worktree Mode
+
+```bash
+if is_worktree_mode "$@"; then
+    echo "Worktree mode enabled (--wt detected)"
+    echo ""
+
+    # Check Git worktree support
+    if ! check_worktree_support; then
+        echo "Error: Git worktree is not supported in this environment" >&2
+        echo "Please upgrade to Git 2.5 or later" >&2
+        exit 1
+    fi
+
+    # Select oldest pending plan
+    PENDING_PLAN="$(select_oldest_pending)"
+
+    if [ -z "$PENDING_PLAN" ]; then
+        echo "No pending plans found in .pilot/plan/pending/" >&2
+        echo "Create a plan first with /00_plan" >&2
+        exit 1
+    fi
+
+    echo "Selected pending plan: $PENDING_PLAN"
+
+    # Extract plan filename for branch generation
+    PLAN_FILENAME="$(basename "$PENDING_PLAN")"
+
+    # Generate branch name
+    BRANCH_NAME="$(plan_to_branch "$PLAN_FILENAME")"
+    echo "Creating branch: $BRANCH_NAME"
+
+    # Determine main branch (default to 'main', but also check for 'master')
+    MAIN_BRANCH="main"
+    if ! git rev-parse --verify "$MAIN_BRANCH" >/dev/null 2>&1; then
+        MAIN_BRANCH="master"
+    fi
+
+    # Create worktree
+    WORKTREE_DIR="$(create_worktree "$BRANCH_NAME" "$PLAN_FILENAME" "$MAIN_BRANCH")"
+
+    if [ -z "$WORKTREE_DIR" ]; then
+        echo "Failed to create worktree" >&2
+        exit 1
+    fi
+
+    # Convert to absolute path
+    WORKTREE_ABS="$(cd "$(dirname "$WORKTREE_DIR")" && pwd)/$(basename "$WORKTREE_DIR")"
+
+    # Move plan to in_progress in the worktree
+    IN_PROGRESS_PLAN="${WORKTREE_ABS}/.pilot/plan/in_progress/${PLAN_FILENAME}"
+    mkdir -p "$(dirname "$IN_PROGRESS_PLAN")"
+    mv "$PENDING_PLAN" "$IN_PROGRESS_PLAN"
+
+    # Add worktree metadata to plan
+    add_worktree_metadata "$IN_PROGRESS_PLAN" "$BRANCH_NAME" "$WORKTREE_ABS" "$MAIN_BRANCH"
+
+    # Create active pointer in worktree
+    mkdir -p "${WORKTREE_ABS}/.pilot/plan/active"
+    BRANCH_KEY="$(printf "%s" "$BRANCH_NAME" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
+    printf "%s" "$IN_PROGRESS_PLAN" > "${WORKTREE_ABS}/.pilot/plan/active/${BRANCH_KEY}.txt"
+
+    # Copy plan to main repo's in_progress for tracking
+    MAIN_IN_PROGRESS=".pilot/plan/in_progress/${PLAN_FILENAME}"
+    cp "$IN_PROGRESS_PLAN" "$MAIN_IN_PROGRESS"
+
+    echo ""
+    echo "✅ Worktree created successfully!"
+    echo ""
+    echo "📂 Worktree location: $WORKTREE_ABS"
+    echo "🌿 Branch: $BRANCH_NAME"
+    echo "📝 Plan: $IN_PROGRESS_PLAN"
+    echo ""
+    echo "⚠️  IMPORTANT: You must change to the worktree directory to continue:"
+    echo ""
+    echo "    cd $WORKTREE_ABS"
+    echo ""
+    echo "Then run /02_execute again (without --wt) to start working on the plan."
+    echo ""
+    echo "When done, run /03_close from the worktree to squash merge and cleanup."
+    echo ""
+
+    # Exit here - user needs to cd to worktree
+    exit 0
+fi
+```
+
+---
+
+## Step 1: Select the Plan to Execute
+
+### 1.1 Determine Plan Path
 
 Priority order:
 1. Explicit path from `"$ARGUMENTS"`
@@ -69,7 +176,7 @@ echo "Selected plan: $PLAN_PATH"
 
 ---
 
-## Step 0.5: Move Plan to In-Progress
+## Step 1.5: Move Plan to In-Progress
 
 > **Principle**: If plan is in pending/, move it to in_progress/ first.
 
@@ -93,7 +200,7 @@ fi
 
 ---
 
-## Step 0.6: Create Active Pointer
+## Step 1.6: Create Active Pointer
 
 > **Principle**: Record the active plan for this branch.
 
@@ -109,7 +216,7 @@ echo "Active plan recorded for branch: $BRANCH"
 
 ---
 
-## Step 1: Convert Plan to Todo List
+## Step 2: Convert Plan to Todo List
 
 ### 1.1 Read the Plan
 
@@ -135,7 +242,7 @@ If the plan has missing critical information, ask one clarifying question before
 
 ---
 
-## Step 2: Execute with TDD (Red-Green-Refactor)
+## Step 3: Execute with TDD (Red-Green-Refactor)
 
 > **Principle**: Tests drive development. AI works within test guardrails.
 
@@ -194,7 +301,7 @@ Iterate through all Success Criteria:
 
 ---
 
-## Step 3: Ralph Loop (Autonomous Completion)
+## Step 4: Ralph Loop (Autonomous Completion)
 
 > **Principle**: Self-correcting loop until completion marker detected.
 
@@ -247,7 +354,7 @@ Log to `.pilot/plan/in_progress/{RUN_ID}/ralph-loop-log.md`:
 
 ---
 
-## Step 4: Todo Continuation Enforcement
+## Step 5: Todo Continuation Enforcement
 
 > **Principle**: Never quit halfway.
 
@@ -268,7 +375,7 @@ Before ending any turn, verify:
 
 ---
 
-## Step 5: Verification
+## Step 6: Verification
 
 Run the most relevant checks available in the repo.
 
@@ -301,7 +408,7 @@ fi
 
 ---
 
-## Step 6: Update Plan Artifacts
+## Step 7: Update Plan Artifacts
 
 Add a short section to the plan with:
 - What changed
@@ -330,7 +437,7 @@ EOF
 
 ---
 
-## Step 7: Auto-Chain to Documentation
+## Step 8: Auto-Chain to Documentation
 
 > **Principle**: 3-sync pattern - implementation complete → docs auto-sync
 

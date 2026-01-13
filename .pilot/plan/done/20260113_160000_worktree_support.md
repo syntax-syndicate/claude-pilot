@@ -352,3 +352,125 @@ cleanup_worktree() # worktree remove, branch -D, rm -rf
 
 - Git worktree documentation: https://git-scm.com/docs/git-worktree
 - 기존 커맨드: `.claude/commands/02_execute.md`, `.claude/commands/03_close.md`
+
+---
+
+## Execution Summary
+
+### Changes Made
+
+**1. Created Worktree Utility Functions**
+- File: `.claude/scripts/worktree-utils.sh`
+- Functions implemented:
+  - `is_worktree_mode()` - Detect --wt flag in arguments
+  - `select_oldest_pending()` - Get oldest pending plan
+  - `plan_to_branch()` - Convert plan filename to branch name
+  - `create_worktree()` - Create Git worktree with branch
+  - `add_worktree_metadata()` - Add worktree info to plan
+  - `is_in_worktree()` - Detect if current directory is a worktree
+  - `read_worktree_metadata()` - Parse worktree info from plan
+  - `do_squash_merge()` - Perform squash merge to main
+  - `has_merge_conflicts()` - Check for merge conflicts
+  - `get_conflicted_files()` - List conflicted files
+  - `resolve_conflicts_interactive()` - Attempt automatic conflict resolution
+  - `cleanup_worktree()` - Remove worktree, branch, and directory
+  - `get_main_project_dir()` - Get main repo path from worktree
+  - `check_worktree_support()` - Verify Git worktree support
+
+**2. Modified /02_execute Command**
+- Added worktree utilities sourcing
+- Added Step 0.5: Worktree Mode (--wt flag)
+- Integrated worktree creation flow:
+  - Selects oldest pending plan
+  - Creates branch from plan name (e.g., `feature/20260113-worktree-support`)
+  - Creates worktree in sibling directory (e.g., `../project-wt-feature-20260113-worktree-support`)
+  - Moves plan to in_progress in worktree
+  - Adds worktree metadata to plan
+  - Creates active pointer in worktree
+  - Provides clear cd instruction for user
+
+**3. Modified /03_close Command**
+- Added worktree utilities sourcing
+- Added Step 0.5: Detect Worktree Context
+- Integrated worktree close flow:
+  - Detects if running in a worktree
+  - Reads worktree metadata from plan
+  - Commits any uncommitted changes
+  - Performs squash merge to main branch
+  - Handles merge conflicts interactively
+  - Cleans up worktree, branch, and directory
+  - Moves plan to done in main repo
+  - Returns to main project directory
+
+### Verification
+
+**Function Tests:**
+- ✅ `is_worktree_mode("--wt")` returns 0 (pass)
+- ✅ `plan_to_branch("20260113_160000_worktree_support.md")` returns `feature/20260113-worktree-support`
+- ✅ `is_in_worktree()` correctly detects not in worktree (main repo)
+
+**Code Quality:**
+- ✅ All functions follow bash best practices
+- ✅ Error handling with proper return codes
+- ✅ Clear error messages for user guidance
+- ✅ Backward compatible (existing --wt-less workflow preserved)
+
+### Workflow Verification
+
+The implemented workflow:
+```
+1. Create multiple plans with /00_plan
+   → pending/plan_A.md, pending/plan_B.md, ...
+
+2. Run /02_execute --wt
+   → Selects oldest pending plan
+   → Creates worktree with branch
+   → Moves plan to in_progress
+   → Prompts user to cd to worktree
+
+3. User cds to worktree and works
+   → cd ../project-wt-feature-xxx
+   → /02_execute (normal execution in worktree)
+
+4. User completes work and runs /03_close
+   → Detects worktree context
+   → Commits changes
+   → Squash merges to main
+   → Cleans up worktree, branch, directory
+   → Returns to main project directory
+```
+
+### Follow-ups
+
+1. **Manual Testing Required** - The worktree workflow requires manual testing:
+   - Create a test plan with /00_plan
+   - Run /02_execute --wt to create worktree
+   - cd to worktree and make some changes
+   - Run /03_close to merge and cleanup
+
+2. **Edge Cases to Test**:
+   - Empty pending/ directory (--wt should fail gracefully)
+   - Git version without worktree support
+   - Merge conflicts during /03_close
+   - Permission issues when creating worktree
+   - Manual cleanup instructions when automatic cleanup fails
+
+3. **Documentation Update** - Consider updating:
+   - GETTING_STARTED.md with worktree workflow
+   - CLAUDE.md with --wt flag documentation
+   - Any workflow guides mentioning parallel work
+
+### Remaining Open Questions
+
+None - all design decisions were made during planning:
+- ✅ Merge strategy: Squash merge
+- ✅ Conflict handling: Interactive resolve
+- ✅ Cleanup scope: Full automatic cleanup
+- ✅ Session transfer: cd instruction (auto cd not feasible in CLI context)
+
+### Notes
+
+- The worktree utilities are self-contained in `.claude/scripts/worktree-utils.sh`
+- Both /02_execute and /03_close source this file
+- The utilities handle Git version detection and provide clear error messages
+- Backward compatibility is maintained - existing workflow without --wt works unchanged

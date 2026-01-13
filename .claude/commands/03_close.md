@@ -18,9 +18,155 @@ _Finalize the current plan by moving it to done and optionally creating a git co
 
 ---
 
-## Step 0: Locate the Active Plan
+## Step 0: Source Worktree Utilities
 
-### 0.1 Active Pointer Convention
+```bash
+# Source worktree utility functions
+WORKTREE_UTILS=".claude/scripts/worktree-utils.sh"
+if [ -f "$WORKTREE_UTILS" ]; then
+    . "$WORKTREE_UTILS"
+else
+    echo "Warning: Worktree utilities not found at $WORKTREE_UTILS"
+fi
+```
+
+---
+
+## Step 0.5: Detect Worktree Context
+
+> **When to handle**: When running /03_close from within a worktree, perform squash merge and cleanup.
+
+### 0.5.1 Check if in Worktree
+
+```bash
+if is_in_worktree; then
+    echo "Worktree context detected"
+    echo ""
+
+    # Get current branch
+    CURRENT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    echo "Current branch: $CURRENT_BRANCH"
+    echo ""
+
+    # Get worktree metadata from active plan
+    WORKTREE_META="$(read_worktree_metadata "$ACTIVE_PLAN_PATH")"
+
+    if [ -z "$WORKTREE_META" ]; then
+        echo "Error: Worktree metadata not found in plan" >&2
+        echo "This plan may not have been created with --wt flag" >&2
+        echo "Continuing with normal close流程..." >&2
+    else
+        # Parse metadata
+        WT_BRANCH="$(printf "%s" "$WORKTREE_META" | cut -d'|' -f1)"
+        WT_PATH="$(printf "%s" "$WORKTREE_META" | cut -d'|' -f2)"
+        WT_MAIN="$(printf "%s" "$WORKTREE_META" | cut -d'|' -f3)"
+
+        echo "Worktree Info:"
+        echo "  Branch: $WT_BRANCH"
+        echo "  Path: $WT_PATH"
+        echo "  Main Branch: $WT_MAIN"
+        echo ""
+
+        # Confirm before proceeding
+        echo "This will:"
+        echo "  1. Commit any uncommitted changes in the worktree"
+        echo "  2. Squash merge $WT_BRANCH into $WT_MAIN"
+        echo "  3. Remove the worktree, branch, and directory"
+        echo ""
+        echo "Press Enter to continue or Ctrl+C to cancel..."
+        read -r
+
+        # Step 1: Commit any uncommitted changes
+        echo ""
+        echo "Checking for uncommitted changes..."
+        if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+            echo "Uncommitted changes detected. Creating a commit..."
+            git add -A
+            git commit -m "WIP: Worktree completion $(date +%Y%m%d_%H%M%S)" || {
+                echo "Warning: Failed to create commit" >&2
+            }
+        else
+            echo "No uncommitted changes"
+        fi
+
+        # Step 2: Generate commit message from plan
+        echo ""
+        echo "Preparing squash merge..."
+        PLAN_TITLE="$(grep -E '^# ' "$ACTIVE_PLAN_PATH" | head -1 | sed 's/^# //')"
+        COMMIT_MESSAGE="${PLAN_TITLE:-Worktree completion}
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+        # Step 3: Squash merge to main
+        echo ""
+        if do_squash_merge "$WT_BRANCH" "$WT_MAIN" "$COMMIT_MESSAGE"; then
+            echo "✅ Squash merge successful"
+
+            # Step 4: Check for conflicts
+            if has_merge_conflicts; then
+                echo ""
+                echo "⚠️  Merge conflicts detected"
+                if resolve_conflicts_interactive; then
+                    echo "✅ Conflicts resolved"
+                    git commit --no-edit
+                else
+                    echo "❌ Failed to resolve conflicts automatically" >&2
+                    echo "Please resolve manually and run cleanup manually:" >&2
+                    echo "  git worktree remove $WT_PATH" >&2
+                    echo "  git branch -D $WT_BRANCH" >&2
+                    echo "  rm -rf $WT_PATH" >&2
+                    exit 1
+                fi
+            fi
+
+            # Step 5: Cleanup worktree
+            echo ""
+            echo "Cleaning up worktree..."
+            cleanup_worktree "$WT_PATH" "$WT_BRANCH"
+
+            # Step 6: Move plan to done in main repo
+            MAIN_PROJECT_DIR="$(get_main_project_dir)"
+            MAIN_PLAN_PATH="${MAIN_PROJECT_DIR}/.pilot/plan/in_progress/$(basename "$ACTIVE_PLAN_PATH")"
+
+            # Move plan from worktree in_progress to main repo done
+            mkdir -p "${MAIN_PROJECT_DIR}/.pilot/plan/done"
+            DONE_PATH="${MAIN_PROJECT_DIR}/.pilot/plan/done/$(basename "$ACTIVE_PLAN_PATH")"
+
+            if [ -e "$DONE_PATH" ]; then
+                TS="$(date +%Y%m%d_%H%M%S)"
+                DONE_PATH="${MAIN_PROJECT_DIR}/.pilot/plan/done/$(basename "$ACTIVE_PLAN_PATH" .md)_closed_${TS}.md"
+            fi
+
+            cp "$ACTIVE_PLAN_PATH" "$DONE_PATH"
+            rm -f "$ACTIVE_PLAN_PATH"
+            rm -f "$MAIN_PLAN_PATH"
+
+            echo ""
+            echo "✅ Worktree close completed successfully!"
+            echo ""
+            echo "Plan archived to: $DONE_PATH"
+            echo ""
+            echo "⚠️  IMPORTANT: You are now in the main project directory:"
+            echo "    $MAIN_PROJECT_DIR"
+            echo ""
+
+            # Exit here - we've completed the worktree close
+            exit 0
+
+        else
+            echo "❌ Squash merge failed" >&2
+            echo "The worktree is still available for manual resolution" >&2
+            exit 1
+        fi
+    fi
+fi
+```
+
+---
+
+## Step 1: Locate the Active Plan
+
+### 1.1 Active Pointer Convention
 
 Multiple plans may be in progress concurrently. This command closes the plan for the current session/branch.
 
@@ -31,7 +177,7 @@ KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
 ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
 ```
 
-### 0.2 Determine `ACTIVE_PLAN_PATH`
+### 1.2 Determine `ACTIVE_PLAN_PATH`
 
 Priority order:
 
@@ -67,16 +213,16 @@ fi
 
 ---
 
-## Step 1: Verify Plan Completion
+## Step 2: Verify Plan Completion
 
-### 1.1 Read Plan
+### 2.1 Read Plan
 
 ```bash
 # Read the active plan
 PLAN_CONTENT="$(cat "$ACTIVE_PLAN_PATH")"
 ```
 
-### 1.2 Check Acceptance Criteria
+### 2.2 Check Acceptance Criteria
 
 Verify:
 - [ ] All acceptance criteria met
@@ -89,15 +235,15 @@ If not complete:
 
 ---
 
-## Step 2: Prepare Done Directory
+## Step 3: Prepare Done Directory
 
-### 2.1 Create Destination
+### 3.1 Create Destination
 
 ```bash
 mkdir -p .pilot/plan/done
 ```
 
-### 2.2 Generate Archive Name
+### 3.2 Generate Archive Name
 
 ```bash
 # Extract RUN_ID from plan path (handle both file and folder formats)
@@ -122,7 +268,7 @@ fi
 
 ---
 
-## Step 3: Move Plan to Done
+## Step 4: Move Plan to Done
 
 ```bash
 if [ "$IS_FOLDER_FORMAT" = true ]; then
@@ -141,7 +287,7 @@ else
 fi
 ```
 
-### 3.1 Clean Active Pointer
+### 4.1 Clean Active Pointer
 
 ```bash
 if [ -f "$ACTIVE_PTR" ]; then
@@ -156,11 +302,11 @@ fi
 
 ---
 
-## Step 4: Create Git Commit (Optional)
+## Step 5: Create Git Commit (Optional)
 
 > **Skip if `"$ARGUMENTS"` contains `no-commit`**
 
-### 4.0 Check Git Repository
+### 5.0 Check Git Repository
 
 ```bash
 # Check if this is a git repository
@@ -171,19 +317,19 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
 fi
 ```
 
-### 4.1 Check Preconditions
+### 5.1 Check Preconditions
 
 - [ ] Working tree clean (except for intentional changes)
 - [ ] No secrets included (no `.env*`, credentials)
 
-### 4.2 Inspect Changes
+### 5.2 Inspect Changes
 
 ```bash
 git status
 git diff
 ```
 
-### 4.3 Generate Commit Message
+### 5.3 Generate Commit Message
 
 Analyze plan and session to create meaningful message:
 
@@ -198,7 +344,7 @@ Analyze plan and session to create meaningful message:
 3. Extract scope (affected area)
 4. Summarize accomplishments (imperative mood)
 
-### 4.4 Commit Format
+### 5.4 Commit Format
 
 ```
 <type>(<scope>): <short summary>
@@ -208,7 +354,7 @@ Analyze plan and session to create meaningful message:
 Co-Authored-By: Claude <noreply@anthropic.com>
 ```
 
-### 4.5 Create Commit
+### 5.5 Create Commit
 
 ```bash
 git add -A
@@ -246,5 +392,4 @@ EOF
 
 ## References
 
-- **Plan Template**: `.claude/templates/PRP.md.template`
 - **Ralph Loop TDD**: `.claude/guides/ralph-loop-tdd.md`

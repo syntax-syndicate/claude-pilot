@@ -146,6 +146,44 @@ chmod +x .claude/scripts/hooks/*.sh
 > [Runs 8 mandatory reviews + type-specific reviews]
 ```
 
+### Parallel Work with Worktrees
+
+For parallel plan execution using Git worktrees:
+
+```
+1. /00_plan × N    → Create multiple plans (stored in pending/)
+2. /02_execute --wt → Create worktree from oldest pending plan
+3. cd to worktree   → Work in isolated environment
+4. /02_execute      → Implement plan (normal flow)
+5. /03_close        → Squash merge to main and cleanup
+```
+
+**Example workflow:**
+
+```bash
+# Create multiple plans
+/00_plan "Add user authentication"
+/00_plan "Implement search feature"
+
+# Start work on oldest plan (creates worktree)
+/02_execute --wt
+# Output: ✅ Worktree created at ../project-wt-feature-20260113-auth
+#         cd ../project-wt-feature-20260113-auth to continue
+
+# Change to worktree and work
+cd ../project-wt-feature-20260113-auth
+/02_execute  # Normal execution without --wt
+
+# Complete and merge
+/03_close  # Squash merges to main, removes worktree
+```
+
+**Worktree benefits:**
+- Work on multiple features simultaneously
+- Isolated environments prevent conflicts
+- Automatic cleanup after merge
+- Each worktree has its own branch
+
 ## Plan Management
 
 Plans are stored in `.pilot/plan/`:
@@ -175,13 +213,6 @@ For domain-specific skill documentation:
 ```bash
 # Create skill for frontend development
 cp .claude/templates/SKILL.md.template .claude/skills/frontend/SKILL.md
-```
-
-### PRP.md.template
-For structured requirements:
-```bash
-# Create PRP for a new feature
-cp .claude/templates/PRP.md.template docs/auth-feature-prp.md
 ```
 
 ## MCP Servers
