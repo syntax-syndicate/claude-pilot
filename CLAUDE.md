@@ -1,6 +1,7 @@
-# [Project Name] - Claude Code Development Guide
+# claude-pilot - Claude Code Development Guide
 
-> **Last Updated**: [Date]
+> **Last Updated**: 2026-01-14
+> **Version**: 3.1.0
 > **Template**: claude-pilot
 
 ---
@@ -336,6 +337,25 @@ See `.claude/settings.json` for MCP configuration.
 ---
 
 ## Related Documentation
+
+### 3-Tier Documentation System
+
+This project uses a hierarchical documentation system:
+
+- **Tier 1**: `CLAUDE.md` (this file) - Project standards, workflows
+- **Detailed Docs**: `docs/ai-context/` - System integration, project structure
+- **Tier 2**: `{component}/CONTEXT.md` - Component-level architecture
+- **Tier 3**: `{feature}/CONTEXT.md` - Feature-level implementation
+
+### docs/ai-context/ Files
+
+| File | Purpose |
+|------|---------|
+| `docs/ai-context/system-integration.md` | Command workflows, integration points |
+| `docs/ai-context/project-structure.md` | Directory layout, key files |
+| `docs/ai-context/docs-overview.md` | Navigation for all documentation |
+
+### External References
 
 - [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit) - 3-Tier Documentation System
 

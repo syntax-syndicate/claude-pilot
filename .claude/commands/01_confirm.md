@@ -37,6 +37,56 @@ If missing: Inform user, ask if proceed
 
 ---
 
+## Step 1.5: Conversation Highlights Extraction
+
+> **⚠️ CRITICAL**: Capture implementation details from `/00_plan` conversation
+> This ensures executor has concrete "how to implement" guidance without re-asking
+
+### 1.5.1 Scan Conversation for:
+
+- [ ] **Code Examples**: Fenced code blocks (```language) from `/00_plan` conversation
+- [ ] **Syntax Patterns**: Specific format/invocation examples, CLI commands, API patterns
+- [ ] **Architecture Diagrams**: ASCII art, Mermaid charts, flow diagrams
+
+### 1.5.2 Extract Implementation Patterns
+
+For each highlight found:
+1. Copy the exact code/syntax/diagram from conversation
+2. Mark with `> **FROM CONVERSATION:**` prefix
+3. Add to plan under "Execution Context → Implementation Patterns" section
+
+### 1.5.3 Output Format
+
+```markdown
+### Implementation Patterns (FROM CONVERSATION)
+
+#### Code Examples
+> **FROM CONVERSATION:**
+> ```typescript
+> [exact code block from conversation]
+> ```
+
+#### Syntax Patterns
+> **FROM CONVERSATION:**
+> ```bash
+> [exact CLI invocation from conversation]
+> ```
+
+#### Architecture Diagrams
+> **FROM CONVERSATION:**
+> ```
+> [exact ASCII/Mermaid diagram from conversation]
+> ```
+```
+
+### 1.5.4 If No Highlights Found
+
+If conversation contains no code examples, syntax patterns, or diagrams:
+- Add note: `> No implementation highlights found in conversation`
+- Continue to Step 2
+
+---
+
 ## Step 2: Generate Plan File Name
 
 ```bash
@@ -63,6 +113,9 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 ## Scope
 ## Test Environment (Detected)
 ## Execution Context (Planner Handoff) [if applicable]
+### Explored Files
+### Key Decisions Made
+### Implementation Patterns (FROM CONVERSATION) [Step 1.5 output]
 ## External Service Integration [if applicable]
 ## Architecture
 ## Vibe Coding Compliance
@@ -77,6 +130,7 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 - Planner's recommended approach
 - Key decisions made during planning
 - Unresolved questions to address during execution
+- Implementation Patterns (code examples, syntax patterns, diagrams from conversation)
 - Assumptions that need validation
 - Dependencies on external resources
 
