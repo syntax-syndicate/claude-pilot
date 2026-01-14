@@ -96,11 +96,102 @@ fi
 
 ---
 
-## Step 5: Git Commit (Default)
+## Step 5: Documentation Checklist (3-Tier)
+
+> **Before committing**: Ensure documentation is synchronized with implementation
+
+### 5.1 Check Documentation Updates
+
+Read the plan to identify affected components/features, then verify:
+
+```bash
+# Check which tiers need updates based on plan scope
+PLAN_SCOPE=$(grep "## Scope" "$ACTIVE_PLAN_PATH" 2>/dev/null || echo "")
+
+# Determine affected tiers
+if echo "$PLAN_SCOPE" | grep -q "CLAUDE.md\|Project Structure"; then
+    TIER1_NEEDED=true
+fi
+if echo "$PLAN_SCOPE" | grep -q "src/\|lib/\|components/"; then
+    TIER2_NEEDED=true
+fi
+if echo "$PLAN_SCOPE" | grep -q "features/\|deep nested"; then
+    TIER3_NEEDED=true
+fi
+```
+
+### 5.2 Verify Document Sizes
+
+Check if any documentation exceeds size thresholds:
+
+```bash
+# Tier 1: CLAUDE.md (max 300 lines)
+if [ -f "CLAUDE.md" ]; then
+    LINES=$(wc -l < CLAUDE.md)
+    if [ "$LINES" -gt 300 ]; then
+        echo "⚠️ CLAUDE.md exceeds 300 lines (current: $LINES)"
+        echo "Consider moving detailed sections to docs/ai-context/"
+    fi
+fi
+
+# Tier 2/3: CONTEXT.md files (Tier 2: 200 lines, Tier 3: 150 lines)
+find . -name "CONTEXT.md" -type f | while read -r ctx_file; do
+    LINES=$(wc -l < "$ctx_file")
+    DEPTH=$(echo "$ctx_file" | tr '/' '\n' | wc -l)
+
+    if [ $DEPTH -ge 3 ] || [[ "$ctx_file" =~ features/ ]]; then
+        # Tier 3
+        if [ "$LINES" -gt 150 ]; then
+            echo "⚠️ $ctx_file exceeds 150 lines (current: $LINES)"
+        fi
+    else
+        # Tier 2
+        if [ "$LINES" -gt 200 ]; then
+            echo "⚠️ $ctx_file exceeds 200 lines (current: $LINES)"
+        fi
+    fi
+done
+```
+
+### 5.3 Prompt for Documentation Sync
+
+If documentation is outdated or exceeds thresholds:
+
+```
+📋 Documentation Review Required:
+
+Based on the completed work, the following documentation updates may be needed:
+
+- [ ] Tier 1 (CLAUDE.md): Project-level changes
+- [ ] Tier 2 (Component CONTEXT.md): Component architecture changes
+- [ ] Tier 3 (Feature CONTEXT.md): Feature implementation details
+- [ ] Document size management: Apply compression/split if needed
+
+Would you like to run /91_document to synchronize documentation now?
+- Enter 'y' to run /91_document auto-sync
+- Enter 's' to skip documentation (will note in commit)
+- Enter 'q' to abort and run manually later
+```
+
+### 5.4 Auto-Trigger /91_document
+
+If user accepts or if coverage/tests/documentation requirements are met:
+
+```bash
+# Auto-trigger if all quality gates pass
+if [ -n "$AUTO_SYNC_DOCS" ]; then
+    echo "Running /91_document auto-sync..."
+    # Invoke documentation sync skill
+fi
+```
+
+---
+
+## Step 6: Git Commit (Default)
 
 > **Skip only if `no-commit` specified - commit is default behavior**
 
-### 5.1 Identify Modified Repositories
+### 6.1 Identify Modified Repositories
 
 Before committing, identify ALL repositories modified:
 1. Current working directory
@@ -126,7 +217,7 @@ for EXTERNAL_REPO in $EXTERNAL_REPOS_INPUT; do
 done
 ```
 
-### 5.2 Commit Repositories
+### 6.2 Commit Repositories
 
 ```bash
 for REPO in "${REPOS_TO_COMMIT[@]}"; do

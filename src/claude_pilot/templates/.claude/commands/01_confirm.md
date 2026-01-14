@@ -1,46 +1,39 @@
 ---
-description: Extract plan from conversation, create file in pending/, and STOP
-argument-hint: "[work_name] --no-review - optional work name for the plan file; --no-review skips auto-review"
-allowed-tools: Read, Glob, Grep, Write, Bash(*)
+description: Extract plan from conversation, create file in pending/, auto-review with Interactive Recovery
+argument-hint: "[work_name] [--lenient] [--no-review] - work name optional; --lenient bypasses BLOCKING; --no-review skips all review"
+allowed-tools: Read, Glob, Grep, Write, Bash(*), AskUserQuestion, Skill
 ---
 
 # /01_confirm
 
-_Extract plan from conversation, create plan file in pending/, and STOP._
+_Extract plan from conversation, create plan file in pending/, run auto-review with Interactive Recovery for BLOCKING findings._
 
 > **MANDATORY STOP - CONFIRMATION ONLY**
-> This command only: 1) Extracts plan from conversation, 2) Creates file in pending/, 3) STOPS
+> This command only: 1) Extracts plan, 2) Creates file in pending/, 3) Runs auto-review, 4) Interactive Recovery if BLOCKING, 5) STOPS
 > To execute, run `/02_execute` after this completes.
 
 ---
 
 ## Core Philosophy
 
-- **No Execution**: Only creates plan file, does NOT execute
-- **Context-Driven**: Extract plan from preceding conversation
-- **Standalone Output**: Created plan file must be sufficient for execution
-- **Executable**: Include concrete steps, commands, checklists
-- **English Only**: Plan file content MUST be in English, regardless of conversation language
-
-> **⚠️ LANGUAGE - PLAN FILE**: The plan file MUST be written in English. Extract and translate any non-English content from the conversation into English before writing to the plan file.
-
----
-
-## Extended Thinking Mode
-
-> **Conditional**: If LLM model is GLM, proceed with maximum extended thinking throughout all phases.
+- **No Execution**: Only creates plan file and reviews
+- **Context-Driven**: Extract plan from conversation
+- **English Only**: Plan file MUST be in English
+- **Strict Mode Default**: BLOCKING findings trigger Interactive Recovery
 
 ---
 
 ## Step 1: Extract Plan from Conversation
 
 ### 1.1 Review Context
-Look for: User Requirements, PRP Analysis (What/Why/How/Success Criteria/Constraints), Scope, Architecture, Execution Plan, Acceptance Criteria, Test Plan, Risks, Open Questions
+Look for: User Requirements, PRP Analysis, Scope, Architecture, Execution Plan, Acceptance Criteria, Test Plan, Risks, Open Questions
+
+**PRP Framework**: See @.claude/guides/prp-framework.md
 
 ### 1.2 Validate Completeness
-Verify: [ ] User Requirements exists, [ ] Execution Plan with phases exists, [ ] Acceptance Criteria defined, [ ] Test Plan included
+Verify: [ ] User Requirements, [ ] Execution Plan, [ ] Acceptance Criteria, [ ] Test Plan
 
-If missing: Inform user, ask if proceed with incomplete plan, note gaps
+If missing: Inform user, ask if proceed
 
 ---
 
@@ -58,36 +51,39 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 
 ## Step 3: Create Plan File
 
-> **⚠️ ENGLISH OUTPUT REQUIRED**: All content written to the plan file MUST be in English. If the conversation was in another language, translate all content before writing to the file.
+> **⚠️ ENGLISH OUTPUT REQUIRED**: All content MUST be in English
 
 ### 3.1 Structure
 ```markdown
 # {Work Name}
 - Generated: {timestamp} | Work: {work_name} | Location: {plan_path}
 
-## User Requirements [From conversation]
-
-## PRP Analysis
-### What / Why / How / Success Criteria / Constraints [From conversation]
-
-## Scope: In scope / Out of scope [From conversation]
-
+## User Requirements
+## PRP Analysis (What/Why/How/Success Criteria/Constraints)
+## Scope
+## Test Environment (Detected)
+## Execution Context (Planner Handoff) [if applicable]
+## External Service Integration [if applicable]
 ## Architecture
-### Data Structures / Module Boundaries [From conversation if applicable]
-
 ## Vibe Coding Compliance
-> Validate plan enforces: Functions ≤50 lines, Files ≤200 lines, Nesting ≤3, SRP/DRY/KISS
-
-## Execution Plan [Phase breakdown from conversation]
-
-## Acceptance Criteria [Checkbox list from conversation]
-
-## Test Plan [From conversation]
-
-## Risks & Mitigations [From conversation]
-
-## Open Questions [From conversation]
+## Execution Plan
+## Acceptance Criteria
+## Test Plan
+## Risks & Mitigations
+## Open Questions
 ```
+
+**Execution Context (Planner Handoff)**: Captures conversation state from `/00_plan`:
+- Planner's recommended approach
+- Key decisions made during planning
+- Unresolved questions to address during execution
+- Assumptions that need validation
+- Dependencies on external resources
+
+This ensures continuity between planning (`/00_plan`) and execution (`/02_execute`) phases.
+
+**Vibe Coding**: See @.claude/guides/vibe-coding.md
+**Gap Detection**: See @.claude/guides/gap-detection.md
 
 ### 3.2 Write File
 ```bash
@@ -99,48 +95,96 @@ echo "Plan created: $PLAN_FILE"
 
 ---
 
-## Step 4: Auto-Review (Optional)
+## Step 4: Auto-Review (Strict Mode)
 
-> **Principle**: Plan validation before execution. No user intervention needed.
+> **Principle**: Plan validation with Interactive Recovery for BLOCKING findings
 
-### 4.1 Skip Check
-If `"$ARGUMENTS"` contains `--no-review`, skip to STOP
+### 4.1 Skip Checks
+- `--no-review`: Skip to STOP
+- `--lenient`: BLOCKING → WARNING
 
-### 4.2 Auto-Invoke Review
+### 4.2 Onboarding Message
+```
+🛑 BLOCKING findings prevent execution until resolved.
+This ensures plan quality for independent executors.
+Use --lenient to bypass (converts BLOCKING → WARNING).
+```
+
+### 4.3 Auto-Invoke Review
 ```
 Skill: 90_review
 Args: "$PLAN_FILE"
 ```
 
-### 4.3 Verify Results
+### 4.4 Check BLOCKING Findings
+| Condition | Action |
+|-----------|--------|
+| BLOCKING > 0 AND no --lenient | Enter Interactive Recovery |
+| BLOCKING > 0 AND --lenient | Log warning, proceed to STOP |
+| BLOCKING = 0 | Proceed to STOP |
+
+### 4.5 Interactive Recovery Loop
+
+**Gap Detection**: See @.claude/guides/gap-detection.md
+
+```
+MAX_ITERATIONS=5
+ITERATION=1
+
+WHILE BLOCKING > 0 AND ITERATION <= MAX:
+    1. Present BLOCKING findings
+    2. Use AskUserQuestion for each BLOCKING
+       - Include "Skip (add as TODO)" option
+    3. Update plan with responses
+    4. Re-run: Skill 90_review
+    5. IF BLOCKING = 0: Exit loop
+    ITERATION++
+```
+
+**Plan Update Format**:
+```markdown
+## External Service Integration
+### API Calls Required
+| Call | From | To | Endpoint | SDK/HTTP | Status |
+|------|------|----|----------|----------|--------|
+| [Description] | [Service] | [Service] | [Path] | [Package] | [New] |
+
+[OR if skipped]
+> ⚠️ SKIPPED: Deferred to implementation phase
+```
+
+### 4.6 Verify Results
 | Result | Action |
 |--------|--------|
-| Pass (Critical=0) | Proceed to STOP |
-| Needs Revision | Findings applied via Step 8 of 90_review |
-
-**Verify**: Check `## Review History` exists, all findings have entries, summary shows "Review findings applied: N critical, N warning, N suggestion"
+| BLOCKING = 0 | Proceed to STOP |
+| BLOCKING > 0 + Recovery complete | Proceed to STOP |
+| BLOCKING > 0 + --lenient | Proceed to STOP |
 
 ---
 
 ## Success Criteria
 
 - [ ] Plan file created in `.pilot/plan/pending/`
-- [ ] Plan content extracted from conversation context
-- [ ] Vibe Coding Compliance section added
-- [ ] Optional review completed
+- [ ] Plan content extracted from conversation
+- [ ] External Service Integration added (if applicable)
+- [ ] Vibe Coding Compliance added
+- [ ] Auto-review completed (unless `--no-review`)
+- [ ] Zero BLOCKING (or `--lenient` used)
 - [ ] Execution NOT started
 
 ---
 
 ## STOP
-> **MANDATORY STOP - DO NOT PROCEED TO EXECUTION**
->
-> ✓ Plan file created in: `.pilot/plan/pending/`
-> ✓ [If review ran] Review findings applied, Review History updated
-> ✓ No execution has started
->
+> **MANDATORY STOP** - Plan created in `.pilot/plan/pending/`
 > To execute: `/02_execute`
-> This will: Move plan to `in_progress/`, create active pointer, begin TDD + Ralph Loop
+> This will: Move to `in_progress/`, create active pointer, begin TDD + Ralph Loop
+
+---
+
+## Related Guides
+- @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition
+- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/guides/gap-detection.md - External service verification
 
 ---
 

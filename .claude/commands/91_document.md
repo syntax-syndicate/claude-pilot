@@ -72,6 +72,60 @@ sed -i "s/last-updated: .*/last-updated: $(date +%Y-%m-%d)/" CLAUDE.md
 npx tsc --noEmit
 ```
 
+### 2.4 Document Size Management
+
+**Purpose**: Ensure documents stay within size thresholds for optimal token usage.
+
+**Size Thresholds**:
+
+| Tier | File | Max Lines | Action When Exceeded |
+|------|------|-----------|---------------------|
+| **Tier 1** | CLAUDE.md | 300 lines | Split to docs/ai-context/ |
+| **Tier 2** | Component CONTEXT.md | 200 lines | Archive old sections |
+| **Tier 3** | Feature CONTEXT.md | 150 lines | Compress or split by feature |
+
+**Auto-Detection**:
+
+```bash
+# Check Tier 1: CLAUDE.md
+if [ -f "CLAUDE.md" ]; then
+    LINES=$(wc -l < CLAUDE.md)
+    if [ "$LINES" -gt 300 ]; then
+        echo "⚠️ CLAUDE.md exceeds 300 lines (current: $LINES)"
+        echo "Recommendation: Move detailed sections to docs/ai-context/"
+    fi
+fi
+
+# Check Tier 2/3: CONTEXT.md files
+find . -name "CONTEXT.md" -type f | while read -r ctx_file; do
+    LINES=$(wc -l < "$ctx_file")
+    DEPTH=$(echo "$ctx_file" | tr '/' '\n' | wc -l)
+
+    if [ $DEPTH -ge 3 ] || [[ "$ctx_file" =~ features/ ]]; then
+        # Tier 3 (150 line limit)
+        if [ "$LINES" -gt 150 ]; then
+            echo "⚠️ $ctx_file exceeds 150 lines (current: $LINES)"
+        fi
+    else
+        # Tier 2 (200 line limit)
+        if [ "$LINES" -gt 200 ]; then
+            echo "⚠️ $ctx_file exceeds 200 lines (current: $LINES)"
+        fi
+    fi
+done
+```
+
+**Auto-Management Actions** (when triggered):
+
+1. **Compress**: Summarize verbose sections, keep key information
+2. **Split**: Create sub-files for large features
+3. **Archive**: Move historical content to HISTORY.md
+4. **Reorganize**: Restructure for better clarity
+
+**Integration**: Automatically run when `/03_close` detects size thresholds, or manually with:
+- `/91_document auto-compress` - Compress oversized documents
+- `/91_document auto-split {file}` - Split a specific document
+
 ---
 
 ## Step 3: Context Engineering (Folder CONTEXT.md)

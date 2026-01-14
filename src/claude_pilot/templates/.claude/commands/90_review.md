@@ -1,25 +1,22 @@
 ---
 description: Review plans with multi-angle analysis (mandatory + extended + autonomous)
-argument-hint: "[focus] - optional focus areas (security, performance, accessibility, etc.)"
-allowed-tools: Read, Glob, Grep, Bash(git:*), Write
+argument-hint: "[plan_path] - path to plan file in pending/ or in_progress/"
+allowed-tools: Read, Glob, Grep, Bash(*), Bash(git:*)
 ---
 
 # /90_review
 
-_Review plans before implementation with comprehensive multi-angle analysis._
+_Review plan for completeness, gaps, and quality issues before execution._
 
 ## Core Philosophy
 
-- **Type-based review**: Customized for code/docs/scenario/infra/DB/AI plans
-- **Mandatory + Extended + Autonomous**: Fixed items + type-specific + self-judgment
-- **Proactive investigation**: Resolve "needs investigation" items upfront
-- **Efficient progression**: Severity-based conditional checks
+- **Comprehensive**: Multi-angle review covering mandatory, extended, and gap detection
+- **Actionable**: Findings map directly to plan sections
+- **Severity-based**: BLOCKING → Interactive Recovery
 
----
-
-## Extended Thinking Mode
-
-> **Conditional**: If LLM model is GLM, proceed with maximum extended thinking throughout all phases.
+**Review Checklist**: See @.claude/guides/review-checklist.md
+**Gap Detection**: See @.claude/guides/gap-detection.md
+**Vibe Coding**: See @.claude/guides/vibe-coding.md
 
 ---
 
@@ -27,7 +24,7 @@ _Review plans before implementation with comprehensive multi-angle analysis._
 
 ```bash
 PLAN_PATH="$(ls -1tr .pilot/plan/in_progress/*/*.md .pilot/plan/pending/*.md 2>/dev/null | head -1)"
-[ -z "$PLAN_PATH" ] && { echo "No plan found to review" >&2; exit 1; }
+[ -z "$PLAN_PATH" ] && { echo "No plan found" >&2; exit 1; }
 echo "Reviewing: $PLAN_PATH"
 ```
 
@@ -47,225 +44,100 @@ Read and extract: User requirements, Execution plan, Acceptance criteria, Test s
 | API docs | Check official docs | WebSearch |
 | Dependencies | npm/PyPI registry | Bash(npm/pip info) |
 
-**Output**: `🔍 Investigation Complete: [Item] → Result: ✅/❌ Finding → Plan update: Applied`
-
 ---
 
 ## Step 2: Type Detection
 
-| Type | Keywords | Extended Reviews |
-|------|----------|------------------|
-| **Code** | function, component, API, bug fix | A, B, D |
-| **Docs** | CLAUDE.md, README, guide | C |
-| **Scenario** | test, validation, edge cases | H |
-| **Infra** | Vercel, env, deploy, CI/CD | F |
-| **DB** | migration, table, schema | E |
-| **AI** | LLM, prompts, AI | G |
+| Type | Keywords | Extended Reviews | Test File Requirement |
+|------|----------|------------------|----------------------|
+| **Code** | function, component, API, bug fix, src/, lib/ | A, B, D | **Required** |
+| **Config** | .claude/, settings, rules, template, workflow, documentation | C | **Optional** (N/A allowed) |
+| **Documentation** | CLAUDE.md, README, guide, docs/, CONTEXT.md | C | **Optional** (N/A allowed) |
+| **Scenario** | test, validation, edge cases | H | **Required** |
+| **Infra** | Vercel, env, deploy, CI/CD | F | **Required** |
+| **DB** | migration, table, schema | E | **Required** |
+| **AI** | LLM, prompts, AI | G | **Required** |
 
-**Output**: `📋 Type: [Primary] / Extended: [A, B, D]`
+### Plan Type Auto-Detection
+
+**Test File Conditional Logic**:
+
+```bash
+# Detect if plan is Config/Documentation type
+SCOPE_CONTENT=$(grep "## Scope" "$PLAN_PATH" 2>/dev/null || echo "")
+SCOPE_IN_SCOPE=$(grep "## Scope" "$PLAN_PATH" -A 20 2>/dev/null || echo "")
+
+# Check for Config/Documentation patterns
+if echo "$SCOPE_CONTENT" | grep -q "\.claude/\|settings\|rules/\|workflow\|template"; then
+    PLAN_TYPE="Config"
+    TEST_FILE_REQUIRED="Optional"
+elif echo "$SCOPE_CONTENT" | grep -qi "CLAUDE\.md\|README\|documentation\|guide\|CONTEXT\.md"; then
+    PLAN_TYPE="Documentation"
+    TEST_FILE_REQUIRED="Optional"
+elif echo "$SCOPE_IN_SCOPE" | grep -q "src/\|lib/\|component\|function\|API"; then
+    PLAN_TYPE="Code"
+    TEST_FILE_REQUIRED="Required"
+else
+    PLAN_TYPE="Code"
+    TEST_FILE_REQUIRED="Required"
+fi
+```
+
+**Conditional Test File Validation**:
+
+| Plan Type | Test File Column Value | Acceptable Values |
+|-----------|------------------------|-------------------|
+| **Code** | Required | `tests/test_xxx.py`, `__tests__/xxx.test.ts`, etc. |
+| **Config** | Optional | `N/A`, `Manual`, or actual test file |
+| **Documentation** | Optional | `N/A`, `Manual`, or actual test file |
+
+**Config/Documentation Plans**: When scope only includes `.claude/`, `CLAUDE.md`, `README`, `CONTEXT.md`, or documentation files, the Test File column may contain `N/A` or `Manual` without triggering a BLOCKING finding.
 
 ---
 
 ## Step 3: Mandatory Reviews (8 items)
 
-Execute all 8 reviews for every plan
+**Full checklist**: See @.claude/guides/review-checklist.md
 
-### Review 1: Development Principles
-☐ **SOLID**: Single responsibility violations?
-☐ **DRY**: Duplicate logic potential?
-☐ **KISS**: Unnecessary complexity?
-☐ **YAGNI**: Features not currently needed?
+Execute all 8 reviews for every plan:
 
-### Review 2: Project Structure
-☐ New files in correct locations?
-☐ Follows naming conventions?
-☐ Uses same patterns as existing code?
-
-### Review 3: Requirement Completeness
-☐ All explicit requirements reflected?
-☐ Implicit requirements considered? (error handling, loading states)
-
-### Review 4: Logic Errors
-☐ Implementation order correct?
-☐ Dependencies ready at point of use?
-☐ Edge cases considered? (null, empty, failure)
-☐ Async handling correct?
-
-### Review 5: Existing Code Reuse
-☐ Search utils/, hooks/, common/ folders
-☐ Check domain-related files
-☐ Format: `🔍 New: [name] → Found: [file]` or `→ Write new`
-
-### Review 6: Better Alternatives
-☐ Simpler implementation?
-☐ More scalable design?
-☐ More testable structure?
-☐ Industry best practices?
-
-### Review 7: Project Alignment
-☐ Type check possible?
-☐ External API docs checked?
-☐ All affected areas identified?
-
-### Review 8: Long-term Impact
-☐ Secondary consequences predicted?
-☐ Technical debt potential assessed?
-☐ Scalability constraints identified?
-☐ Rollback cost considered?
+| # | Item | Key Checks |
+|---|------|------------|
+| 1 | Dev Principles | SOLID, DRY, KISS, YAGNI |
+| 2 | Project Structure | File locations, naming, patterns |
+| 3 | Requirement Completeness | Explicit + implicit requirements |
+| 4 | Logic Errors | Order, dependencies, edge cases, async |
+| 5 | Existing Code Reuse | Search utils/, hooks/, common/ |
+| 6 | Better Alternatives | Simpler, scalable, testable |
+| 7 | Project Alignment | Type check, API docs, affected areas |
+| 8 | Long-term Impact | Consequences, debt, scalability, rollback |
 
 ---
 
 ## Step 4: Vibe Coding Compliance
 
-> **NEW: Check Vibe Coding Guidelines enforcement**
+**Vibe Coding**: See @.claude/guides/vibe-coding.md
 
 | Target | Limit | Check |
 |--------|-------|-------|
-| Function | ≤50 lines | Plan mentions splitting large functions? |
-| File | ≤200 lines | Plan respects module boundaries? |
-| Nesting | ≤3 levels | Early return pattern specified? |
-
-☐ **SRP**: One function = one responsibility?
-☐ **DRY**: No duplicate code blocks planned?
-☐ **KISS**: Simplest solution that works?
-☐ **Early Return**: Reduced nesting planned?
+| Function | ≤50 lines | Plan mentions splitting? |
+| File | ≤200 lines | Plan respects boundaries? |
+| Nesting | ≤3 levels | Early return specified? |
 
 ---
 
 ## Step 5: Extended Reviews (By Type)
 
-### Activation Matrix
+**Activation Matrix**: See @.claude/guides/review-checklist.md
 
-| Type | Keywords | Activated Reviews |
-|------|----------|-------------------|
-| **Code Modification** | function, component, API, bug fix, refactor | A, B, D |
-| **Documentation** | CLAUDE.md, README, guide | C |
-| **Scenario Validation** | test, validation, scenario, edge cases | H |
-| **Infrastructure** | Docker, env, deploy, CI/CD | F |
-| **DB Schema** | migration, table, column | E |
-| **AI/Prompts** | GPT, Claude, prompts, LLM | G |
-
-### Extended A: API Compatibility Review
-
-**When**: Code modification plans
-
-| Item | Question |
-|------|----------|
-| **Function Signature** | Do param changes break existing callers? |
-| **Return Type** | Does return value change affect logic? |
-| **Required vs Optional** | If new params are required, do callers need modification? |
-| **Backward Compat** | Can existing behavior be maintained with defaults? |
-
-**Process**:
-1. List functions/APIs being changed
-2. Search call sites using Grep
-3. Verify each call site works after change
-
-**Result Format**:
-```
-[Changed: functionName()]
-- Original: (param1: Type1) => ReturnType
-- Changed: (param1: Type1, param2?: Type2) => ReturnType
-- Backward compatible: Yes/No
-- Call site impact: N files
-```
-
-### Extended B: Type Safety Review
-
-**When**: Code modification plans
-
-| Item | Question |
-|------|----------|
-| **Type Location** | Are new types in `types/` directory? |
-| **Generic Complexity** | Are generics unnecessarily complex? |
-| **any Usage** | Are concrete types used instead of `any`? |
-| **null Check** | Are `?.` and `??` properly used? |
-| **Type Guards** | Are type guards present where needed? |
-
-### Extended C: Document Consistency Review
-
-**When**: Documentation plans
-
-| Item | Question |
-|------|----------|
-| **Cross-refs** | Are other docs referencing this? Are links valid? |
-| **Code-Doc Sync** | Does content match actual code? |
-| **Version Info** | Is last-updated date updated? |
-| **Example Code** | Do examples match current API? |
-
-### Extended D: Test Impact Review
-
-**When**: Code modification plans
-
-| Item | Question |
-|------|----------|
-| **Existing Tests** | Will any tests break from changes? |
-| **Test Coverage** | Are tests for new code in the plan? |
-| **Mocking** | Is mocking needed for new deps? |
-
-### Extended E: Migration Safety
-
-**When**: DB schema plans
-
-| Item | Question |
-|------|----------|
-| **Rollback** | Can we rollback if migration fails? |
-| **Data Integrity** | Is existing data preserved? |
-| **Downtime** | Is service interruption required? |
-| **Type Gen** | Is type generation included? |
-
-### Extended F: Deployment Impact Review
-
-**When**: Infrastructure/deployment plans
-
-| Item | Question |
-|------|----------|
-| **Env Separation** | Are dev/staging/prod properly separated? |
-| **Env Vars** | Are new env vars set in deployment platform? |
-| **Rollback Plan** | Is there a rollback procedure? |
-| **Timeout** | Is timeout set for long-running API calls? |
-
-### Extended G: Prompt Quality Review
-
-**When**: AI/prompt plans
-
-| Item | Question |
-|------|----------|
-| **Positive Expression** | Using positive instead of DO NOT, NEVER? |
-| **Context Balance** | Is info balanced across prompt sections? |
-| **Examples** | Are success/failure examples included? |
-| **Cost** | Is token usage appropriate? |
-
-### Extended H: Test Scenario Review
-
-**When**: Scenario validation plans
-
-| Item | Question |
-|------|----------|
-| **Coverage** | Normal/edge/error cases all included? |
-| **Reproducibility** | Can scenarios be consistently reproduced? |
-| **Independence** | No dependency on other scenarios? |
-| **Priority** | Critical scenarios verified first? |
-| **Input/Output** | Are inputs and expected outputs clear? |
-
-**Result Format**:
-```
-[Scenario: Name]
-- Coverage: Normal/Edge/Error
-- Reproducible: Yes/No
-- Independent: Yes/No
-```
-
-### Quick Reference
-
-```
-Code Mod → A (API compat) + B (Types) + D (Tests)
-Docs     → C (Consistency)
-Scenario → H (Coverage)
-Infra    → F (Deployment)
-DB       → E (Migration)
-AI       → G (Prompts)
-```
+| Type | Keywords | Reviews |
+|------|----------|---------|
+| Code Mod | function, component, API, bug fix | A (API compat), B (Types), D (Tests) |
+| Documentation | CLAUDE.md, README, guide | C (Consistency) |
+| Scenario | test, validation, edge cases | H (Coverage) |
+| Infrastructure | Docker, env, deploy, CI/CD | F (Deployment) |
+| DB Schema | migration, table, column | E (Migration) |
+| AI/Prompts | GPT, Claude, prompts, LLM | G (Prompts) |
 
 ---
 
@@ -273,23 +145,61 @@ AI       → G (Prompts)
 
 > **Self-judge beyond mandatory/extended items**
 
-**Perspectives**: Security (auth, validation), Performance (bottlenecks, caching), UX (loading, errors), Maintainability (readability), Concurrency (race conditions), Error Recovery (partial failure)
-
-**Output**: `🧠 Autonomous Discoveries: [1: Perspective] Issue → Recommendation`
+**Perspectives**: Security, Performance, UX, Maintainability, Concurrency, Error Recovery
 
 ---
 
-## Step 7: User-Requested Focus
+## Step 7: Gap Detection Review (MANDATORY)
 
-If `"$ARGUMENTS"` contains focus areas, deep-dive:
+**Full gap detection**: See @.claude/guides/gap-detection.md
 
-| Focus | Areas |
-|-------|-------|
-| `security` | Auth, injection, XSS, sensitive data |
-| `performance` | Queries, loops, caching, bundle size |
-| `accessibility` | ARIA, keyboard, contrast, screen readers |
-| `api` | Backward compatibility, versioning |
-| `testing` | Coverage, edge cases, integration |
+### Severity Levels
+
+| Level | Symbol | Description |
+|-------|--------|-------------|
+| **BLOCKING** | 🛑 | Cannot proceed, triggers Interactive Recovery |
+| **Critical** | 🚨 | Must fix before execution |
+| **Warning** | ⚠️ | Should fix |
+| **Suggestion** | 💡 | Nice to have |
+
+### Gap Detection Categories (9 items)
+
+| # | Category | Trigger Keywords |
+|---|----------|-------------------|
+| 9.1 | External API | API, fetch, call, endpoint, SDK, HTTP |
+| 9.2 | Database Operations | database, migration, schema, table |
+| 9.3 | Async Operations | async, await, timeout, promise |
+| 9.4 | File Operations | file, read, write, temp, path |
+| 9.5 | Environment | env, .env, environment, variable |
+| 9.6 | Error Handling | try, catch, error, exception |
+| 9.7 | Test Plan Verification | **BLOCKING** - Always run |
+
+### 9.7 Test Plan Verification (BLOCKING)
+
+**Trigger**: Run for ALL plans
+
+| Check | Question | Code Plans | Config/Doc Plans |
+|-------|----------|------------|------------------|
+| Scenarios Defined | Are there concrete test scenarios? | Required | Required |
+| Test Files Specified | Does each scenario include file path? | Required | **Optional** (N/A allowed) |
+| Test Command Detected | Is test command specified? | Required | Optional |
+| Coverage Command | Is coverage command included? | Required | Optional |
+| Test Environment | Does plan include "Test Environment (Detected)"? | Required | Optional |
+
+**BLOCKING Conditions** (Code Plans):
+- Test Plan section missing
+- No test scenarios defined
+- Test scenarios lack "Test File" column with valid path
+- Test command not specified
+- Coverage command not specified
+
+**BLOCKING Conditions** (Config/Documentation Plans):
+- Test Plan section missing
+- No test scenarios defined
+
+**Note**: For Config/Documentation plans, "Test File" column may contain `N/A` or `Manual` without triggering BLOCKING. Test command and coverage command are optional but recommended if applicable.
+
+**Plan Type Detection**: See Step 2: Type Detection for auto-detection logic.
 
 ---
 
@@ -299,36 +209,25 @@ If `"$ARGUMENTS"` contains focus areas, deep-dive:
 # Plan Review Results
 
 ## Summary
-- **Assessment**: [Pass/Needs Revision]
-- **Type**: [Primary / Extended: A,B,D]
-- **Findings**: Critical: N / Warning: N / Suggestion: N
+- **Assessment**: [Pass/Needs Revision/BLOCKED]
+- **Findings**: BLOCKING: N / Critical: N / Warning: N / Suggestion: N
 
 ## Mandatory Review (8 items)
 | # | Item | Status |
 |---|------|--------|
 | 1 | Dev Principles | ✅/⚠️/❌ |
-| 2 | Project Structure | ✅/⚠️/❌ |
-| 3 | Requirements | ✅/⚠️/❌ |
-| 4 | Logic Errors | ✅/⚠️/❌ |
-| 5 | Code Reuse | ✅/⚠️/❌ |
-| 6 | Alternatives | ✅/⚠️/❌ |
-| 7 | Project Alignment | ✅/⚠️/❌ |
-| 8 | Long-term Impact | ✅/⚠️/❌ |
+| 2-8 | ... | ... |
+
+## Gap Detection Review (MANDATORY)
+| # | Category | Status |
+|---|----------|--------|
+| 9.1 | External API | ✅/🛑 |
+| 9.2-9.7 | ... | ... |
 
 ## Vibe Coding Compliance
 | Target | Status |
 |--------|--------|
 | Functions ≤50 lines | ✅/⚠️/❌ |
-| Files ≤200 lines | ✅/⚠️/❌ |
-| Nesting ≤3 levels | ✅/⚠️/❌ |
-
-## Extended Review [Activated items only]
-## Autonomous Discoveries
-## Issues
-### 🚨 Critical (Must fix)
-### ⚠️ Warning (Should fix)
-### 💡 Suggestion
-## Reusable Code Found
 ```
 
 ---
@@ -342,50 +241,41 @@ If `"$ARGUMENTS"` contains focus areas, deep-dive:
 | Issue Type | Target Section | Method |
 |------------|----------------|--------|
 | Missing step | Execution Plan | Add checkbox |
-| Unclear requirement | User Requirements / Success Criteria | Clarify wording |
+| Unclear requirement | User Requirements | Clarify wording |
 | Test gap | Test Plan | Add scenario |
-| Risk identified | Risks & Mitigations | Add item |
-| Alternative approach | How (Approach) | Add/modify |
-| Scope issue | Scope (In/Out) | Adjust scope |
+| Risk identified | Risks | Add item |
 
 ### 9.2 Apply & Update History
 
 1. Read plan file
-2. For each finding: Identify target section, Apply modification, Track change
+2. For each finding: Identify target section, Apply modification
 3. Write updated plan
-
-**Error Handling**: If error, keep original intact, log to History
 
 **Append to Review History**:
 ```markdown
 ## Review History
-
-### Review #N (YYYY-MM-DD HH:MM)
-
-**Findings Applied**:
-| Type | Count | Applied |
-|------|-------|---------|
-| Critical | N | N |
-| Warning | N | N |
-| Suggestion | N | N |
-
-**Changes Made**:
-1. **[Type] Section - Item**
-   - Issue: [Description]
-   - Applied: [Change made]
+### Review #N (YYYY-MM-DD)
+**Findings Applied**: BLOCKING: N, Critical: N, Warning: N, Suggestion: N
 ```
 
 ---
 
 ## Success Criteria
 
-| Criteria | Threshold |
-|----------|-----------|
-| Auto-proceed | Critical 0 + Warning ≤1 |
-| User confirmation | Critical ≥1 OR Warning ≥2 |
+- [ ] All 8 mandatory reviews completed
+- [ ] Extended reviews activated by type
+- [ ] Gap detection run (BLOCKING items trigger Interactive Recovery)
+- [ ] Findings applied to plan
+- [ ] Review history updated
+
+---
+
+## Related Guides
+- @.claude/guides/review-checklist.md - Comprehensive review checklist
+- @.claude/guides/gap-detection.md - External service verification
+- @.claude/guides/vibe-coding.md - Code quality standards
 
 ---
 
 ## References
 - [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
-- **Branch**: !`git rev-parse --abbrev-ref HEAD`

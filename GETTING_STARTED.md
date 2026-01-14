@@ -44,7 +44,7 @@ cp -r .claude/ ~/your-project/
 cp -r .pilot/ ~/your-project/
 
 # Copy the main configuration
-cp CLAUDE.md AGENTS.md ~/your-project/
+cp CLAUDE.md ~/your-project/
 
 # (Optional) Copy example configuration
 cp -r examples/minimal-typescript/.claude/settings.json ~/your-project/.claude/
@@ -327,13 +327,11 @@ ls -la .pilot/plan/
 2. Customize CLAUDE.md
 3. Configure settings.json
 4. Try your first `/00_plan` command
-5. Read [AGENTS.md](AGENTS.md) for agent patterns
-6. Explore [examples/](examples/) for more configurations
+5. Explore [examples/](examples/) for more configurations
 
 ## Resources
 
 - [README.md](README.md) - Project overview and features
-- [AGENTS.md](AGENTS.md) - Agent patterns and coordination
 - [examples/](examples/) - Configuration examples
 - [install.sh](install.sh) - Installation script source
 

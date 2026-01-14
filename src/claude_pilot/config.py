@@ -57,12 +57,24 @@ MANAGED_FILES: list[tuple[str, str]] = [
     (".claude/scripts/hooks/branch-guard.sh", ".claude/scripts/hooks/branch-guard.sh"),
     # Version file
     (".claude/.pilot-version", ".claude/.pilot-version"),
+    # Rules (new - Claude Code official pattern)
+    (".claude/rules/core/workflow.md", ".claude/rules/core/workflow.md"),
+    (".claude/rules/documentation/tier-rules.md", ".claude/rules/documentation/tier-rules.md"),
+    # Guides (new - methodology documentation)
+    (".claude/guides/tdd-methodology.md", ".claude/guides/tdd-methodology.md"),
+    (".claude/guides/ralph-loop.md", ".claude/guides/ralph-loop.md"),
+    (".claude/guides/vibe-coding.md", ".claude/guides/vibe-coding.md"),
+    (".claude/guides/prp-framework.md", ".claude/guides/prp-framework.md"),
+    (".claude/guides/review-checklist.md", ".claude/guides/review-checklist.md"),
+    (".claude/guides/gap-detection.md", ".claude/guides/gap-detection.md"),
+    (".claude/guides/3tier-documentation.md", ".claude/guides/3tier-documentation.md"),
+    (".claude/guides/test-environment.md", ".claude/guides/test-environment.md"),
 ]
 
 # User-owned files (never overwritten)
 USER_FILES: list[str] = [
     "CLAUDE.md",
-    "AGENTS.md",
+    # "AGENTS.md",  # REMOVED - moved to DEPRECATED_FILES (not Claude Code official)
     ".pilot",
     ".claude/settings.json",
     ".claude/local",
@@ -71,6 +83,7 @@ USER_FILES: list[str] = [
 # Deprecated files (removed in newer versions)
 DEPRECATED_FILES: list[str] = [
     ".claude/templates/PRP.md.template",
+    "AGENTS.md",  # ADDED - will be auto-deleted on update (not Claude Code official)
 ]
 
 

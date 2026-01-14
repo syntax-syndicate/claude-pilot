@@ -48,14 +48,50 @@ Read and extract: User requirements, Execution plan, Acceptance criteria, Test s
 
 ## Step 2: Type Detection
 
-| Type | Keywords | Extended Reviews |
-|------|----------|------------------|
-| **Code** | function, component, API, bug fix | A, B, D |
-| **Docs** | CLAUDE.md, README, guide | C |
-| **Scenario** | test, validation, edge cases | H |
-| **Infra** | Vercel, env, deploy, CI/CD | F |
-| **DB** | migration, table, schema | E |
-| **AI** | LLM, prompts, AI | G |
+| Type | Keywords | Extended Reviews | Test File Requirement |
+|------|----------|------------------|----------------------|
+| **Code** | function, component, API, bug fix, src/, lib/ | A, B, D | **Required** |
+| **Config** | .claude/, settings, rules, template, workflow, documentation | C | **Optional** (N/A allowed) |
+| **Documentation** | CLAUDE.md, README, guide, docs/, CONTEXT.md | C | **Optional** (N/A allowed) |
+| **Scenario** | test, validation, edge cases | H | **Required** |
+| **Infra** | Vercel, env, deploy, CI/CD | F | **Required** |
+| **DB** | migration, table, schema | E | **Required** |
+| **AI** | LLM, prompts, AI | G | **Required** |
+
+### Plan Type Auto-Detection
+
+**Test File Conditional Logic**:
+
+```bash
+# Detect if plan is Config/Documentation type
+SCOPE_CONTENT=$(grep "## Scope" "$PLAN_PATH" 2>/dev/null || echo "")
+SCOPE_IN_SCOPE=$(grep "## Scope" "$PLAN_PATH" -A 20 2>/dev/null || echo "")
+
+# Check for Config/Documentation patterns
+if echo "$SCOPE_CONTENT" | grep -q "\.claude/\|settings\|rules/\|workflow\|template"; then
+    PLAN_TYPE="Config"
+    TEST_FILE_REQUIRED="Optional"
+elif echo "$SCOPE_CONTENT" | grep -qi "CLAUDE\.md\|README\|documentation\|guide\|CONTEXT\.md"; then
+    PLAN_TYPE="Documentation"
+    TEST_FILE_REQUIRED="Optional"
+elif echo "$SCOPE_IN_SCOPE" | grep -q "src/\|lib/\|component\|function\|API"; then
+    PLAN_TYPE="Code"
+    TEST_FILE_REQUIRED="Required"
+else
+    PLAN_TYPE="Code"
+    TEST_FILE_REQUIRED="Required"
+fi
+```
+
+**Conditional Test File Validation**:
+
+| Plan Type | Test File Column Value | Acceptable Values |
+|-----------|------------------------|-------------------|
+| **Code** | Required | `tests/test_xxx.py`, `__tests__/xxx.test.ts`, etc. |
+| **Config** | Optional | `N/A`, `Manual`, or actual test file |
+| **Documentation** | Optional | `N/A`, `Manual`, or actual test file |
+
+**Config/Documentation Plans**: When scope only includes `.claude/`, `CLAUDE.md`, `README`, `CONTEXT.md`, or documentation files, the Test File column may contain `N/A` or `Manual` without triggering a BLOCKING finding.
 
 ---
 
@@ -142,20 +178,28 @@ Execute all 8 reviews for every plan:
 
 **Trigger**: Run for ALL plans
 
-| Check | Question |
-|-------|----------|
-| Scenarios Defined | Are there concrete test scenarios? |
-| Test Files Specified | Does each scenario include file path? |
-| Test Command Detected | Is test command specified? |
-| Coverage Command | Is coverage command included? |
-| Test Environment | Does plan include "Test Environment (Detected)"? |
+| Check | Question | Code Plans | Config/Doc Plans |
+|-------|----------|------------|------------------|
+| Scenarios Defined | Are there concrete test scenarios? | Required | Required |
+| Test Files Specified | Does each scenario include file path? | Required | **Optional** (N/A allowed) |
+| Test Command Detected | Is test command specified? | Required | Optional |
+| Coverage Command | Is coverage command included? | Required | Optional |
+| Test Environment | Does plan include "Test Environment (Detected)"? | Required | Optional |
 
-**BLOCKING Conditions**:
+**BLOCKING Conditions** (Code Plans):
 - Test Plan section missing
 - No test scenarios defined
-- Test scenarios lack "Test File" column
+- Test scenarios lack "Test File" column with valid path
 - Test command not specified
 - Coverage command not specified
+
+**BLOCKING Conditions** (Config/Documentation Plans):
+- Test Plan section missing
+- No test scenarios defined
+
+**Note**: For Config/Documentation plans, "Test File" column may contain `N/A` or `Manual` without triggering BLOCKING. Test command and coverage command are optional but recommended if applicable.
+
+**Plan Type Detection**: See Step 2: Type Detection for auto-detection logic.
 
 ---
 

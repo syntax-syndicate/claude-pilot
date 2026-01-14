@@ -62,6 +62,7 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 ## PRP Analysis (What/Why/How/Success Criteria/Constraints)
 ## Scope
 ## Test Environment (Detected)
+## Execution Context (Planner Handoff) [if applicable]
 ## External Service Integration [if applicable]
 ## Architecture
 ## Vibe Coding Compliance
@@ -71,6 +72,15 @@ PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
 ## Risks & Mitigations
 ## Open Questions
 ```
+
+**Execution Context (Planner Handoff)**: Captures conversation state from `/00_plan`:
+- Planner's recommended approach
+- Key decisions made during planning
+- Unresolved questions to address during execution
+- Assumptions that need validation
+- Dependencies on external resources
+
+This ensures continuity between planning (`/00_plan`) and execution (`/02_execute`) phases.
 
 **Vibe Coding**: See @.claude/guides/vibe-coding.md
 **Gap Detection**: See @.claude/guides/gap-detection.md
