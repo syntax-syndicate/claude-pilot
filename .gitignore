@@ -16,15 +16,26 @@ out/
 *.egg-info/
 *.egg
 *.whl
+*.tar.gz
 .eggs/
 __pycache__/
 *.py[cod]
 *$py.class
 .Python
 *.so
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+venv/
+env/
+ENV/
 
 # PyPI/twine
 .pypirc
+.twine.toml
 
 # Local deploy docs (contains sensitive info)
 DEPLOY.local.md
