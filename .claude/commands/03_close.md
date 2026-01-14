@@ -42,14 +42,17 @@ fi
 ## Step 2: Locate Active Plan
 
 ```bash
-mkdir -p .pilot/plan/active
+# Project root detection (always use project root, not current directory)
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+mkdir -p "$PROJECT_ROOT/.pilot/plan/active"
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
 KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
-ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
+ACTIVE_PTR="$PROJECT_ROOT/.pilot/plan/active/${KEY}.txt"
 
 # Priority: explicit args, RUN_ID, active pointer
 [ -f "$ACTIVE_PTR" ] && ACTIVE_PLAN_PATH="$(cat "$ACTIVE_PTR")"
-[ -z "$ACTIVE_PLAN_PATH" ] && [ -n "$RUN_ID" ] && ACTIVE_PLAN_PATH=".pilot/plan/in_progress/${RUN_ID}.md"
+[ -z "$ACTIVE_PLAN_PATH" ] && [ -n "$RUN_ID" ] && ACTIVE_PLAN_PATH="$PROJECT_ROOT/.pilot/plan/in_progress/${RUN_ID}.md"
 
 [ -z "$ACTIVE_PLAN_PATH" ] || [ ! -f "$ACTIVE_PLAN_PATH" ] && { echo "No active plan" >&2; exit 1; }
 ```
@@ -70,7 +73,7 @@ If not complete: Update plan with remaining items, don't move to done
 ## Step 4: Move to Done
 
 ```bash
-mkdir -p .pilot/plan/done
+mkdir -p "$PROJECT_ROOT/.pilot/plan/done"
 
 # Extract RUN_ID (file or folder format)
 if printf "%s" "$ACTIVE_PLAN_PATH" | grep -q '/plan.md$'; then
@@ -79,12 +82,12 @@ else
     RUN_ID="$(basename "$ACTIVE_PLAN_PATH" .md)"; IS_FOLDER_FORMAT=false
 fi
 
-DONE_PATH=".pilot/plan/done/${RUN_ID}.md"
-[ -e "$DONE_PATH" ] && DONE_PATH=".pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S).md"
+DONE_PATH="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}.md"
+[ -e "$DONE_PATH" ] && DONE_PATH="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S).md"
 
 if [ "$IS_FOLDER_FORMAT" = true ]; then
-    DONE_DIR=".pilot/plan/done/${RUN_ID}"
-    [ -e "$DONE_DIR" ] && DONE_DIR=".pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S)"
+    DONE_DIR="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}"
+    [ -e "$DONE_DIR" ] && DONE_DIR="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S)"
     mv "$(dirname "$ACTIVE_PLAN_PATH")" "$DONE_DIR"
 else
     mv "$ACTIVE_PLAN_PATH" "$DONE_PATH"

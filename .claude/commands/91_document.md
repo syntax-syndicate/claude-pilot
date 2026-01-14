@@ -33,7 +33,10 @@ _Update documentation with full auto-sync and hierarchical CONTEXT.md management
 
 ### 1.1 Auto-Sync: Load Plan
 ```bash
-RUN_DIR=".pilot/plan/in_progress/${RUN_ID}"
+# Project root detection (always use project root, not current directory)
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+RUN_DIR="$PROJECT_ROOT/.pilot/plan/in_progress/${RUN_ID}"
 ```
 Load: Plan requirements, Success criteria, Ralph Loop results
 

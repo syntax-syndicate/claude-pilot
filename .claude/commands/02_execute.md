@@ -49,21 +49,25 @@ fi
 Priority: 1) Explicit from args, 2) Oldest in pending/, 3) Active pointer, 4) Most recent in in_progress/
 
 ```bash
+# Project root detection (always use project root, not current directory)
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
 PLAN_PATH="${EXPLICIT_PATH}"
-[ -z "$PLAN_PATH" ] && PLAN_PATH="$(ls -1t .pilot/plan/pending/*.md 2>/dev/null | tail -1)"
-[ -z "$PLAN_PATH" ] && PLAN_PATH="$(ls -1t .pilot/plan/in_progress/*.md 2>/dev/null | head -1)"
+[ -z "$PLAN_PATH" ] && PLAN_PATH="$(ls -1t "$PROJECT_ROOT/.pilot/plan/pending"/*.md 2>/dev/null | tail -1)"
+[ -z "$PLAN_PATH" ] && PLAN_PATH="$(ls -1t "$PROJECT_ROOT/.pilot/plan/in_progress"/*.md 2>/dev/null | head -1)"
 [ -z "$PLAN_PATH" ] || [ ! -f "$PLAN_PATH" ] && { echo "No plan found. Run /00_plan first" >&2; exit 1; }
 ```
 
 ### 1.3 Move to In-Progress & Create Active Pointer
 ```bash
 if printf "%s" "$PLAN_PATH" | grep -q "/pending/"; then
-    PLAN_FILENAME="$(basename "$PLAN_PATH")"; IN_PROGRESS_PATH=".pilot/plan/in_progress/${PLAN_FILENAME}"
+    PLAN_FILENAME="$(basename "$PLAN_PATH")"; IN_PROGRESS_PATH="$PROJECT_ROOT/.pilot/plan/in_progress/${PLAN_FILENAME}"
+    mkdir -p "$PROJECT_ROOT/.pilot/plan/in_progress"
     mv "$PLAN_PATH" "$IN_PROGRESS_PATH"; PLAN_PATH="$IN_PROGRESS_PATH"
 fi
-mkdir -p .pilot/plan/active; BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
+mkdir -p "$PROJECT_ROOT/.pilot/plan/active"; BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
 KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
-printf "%s" "$PLAN_PATH" > ".pilot/plan/active/${KEY}.txt"
+printf "%s" "$PLAN_PATH" > "$PROJECT_ROOT/.pilot/plan/active/${KEY}.txt"
 ```
 
 ---

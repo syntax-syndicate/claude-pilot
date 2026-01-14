@@ -90,11 +90,14 @@ If conversation contains no code examples, syntax patterns, or diagrams:
 ## Step 2: Generate Plan File Name
 
 ```bash
-mkdir -p .pilot/plan/pending
+# Project root detection (always use project root, not current directory)
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+mkdir -p "$PROJECT_ROOT/.pilot/plan/pending"
 WORK_NAME="$(echo "$ARGUMENTS" | sed 's/--no-review//g' | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/_/g' | head -c 50 | xargs)"
 [ -z "$WORK_NAME" ] && WORK_NAME="plan"
 TS="$(date +%Y%m%d_%H%M%S)"
-PLAN_FILE=".pilot/plan/pending/${TS}_${WORK_NAME}.md"
+PLAN_FILE="$PROJECT_ROOT/.pilot/plan/pending/${TS}_${WORK_NAME}.md"
 ```
 
 ---
