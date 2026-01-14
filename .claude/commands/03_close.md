@@ -6,13 +6,13 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git:*), Bash(*)
 
 # /03_close
 
-_Finalize plan by moving to done and optionally creating git commit._
+_Finalize plan by moving to done and creating git commit by default._
 
 ## Core Philosophy
 
 - **Close only after verification**: Don't archive incomplete plans
 - **Traceability**: Preserve plan with evidence (commands, results)
-- **Optional commit**: Committing is opt-in
+- **Default commit**: Commits created automatically in git repos (skip with no-commit flag)
 
 ---
 
@@ -131,24 +131,80 @@ fi
 
 ---
 
-## Step 5: Git Commit (Optional)
+## Step 5: Git Commit (Default)
 
-> **Skip if `"$ARGUMENTS"` contains `no-commit`**
+> **Skip only if `"$ARGUMENTS"` contains `no-commit` - commit is default behavior**
+
+### Step 5.1: Identify All Modified Repositories
+
+> **Review all modifications made during this work session**
+>
+> Before committing, identify ALL repositories that were modified:
+> 1. Current working directory repository
+> 2. Any external/linked repositories accessed via absolute paths
+> 3. Submodules or workspace dependencies that were edited
+>
+> For each identified repository with uncommitted changes, proceed to commit.
 
 ```bash
-if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo "Not a git repo. Plan archived."
-    exit 0
+# Build list of repositories to commit
+declare -a REPOS_TO_COMMIT=()
+CURRENT_REPO="$(pwd)"
+
+# Check if current directory is a git repo
+if git rev-parse --git-dir > /dev/null 2>&1; then
+    REPOS_TO_COMMIT+=("$CURRENT_REPO")
 fi
 
-# Check preconditions: [ ] Working tree clean (except intentional changes), [ ] No secrets (.env*, credentials)
-git status
-git diff
+# Prompt to identify external repositories modified during work
+echo "Checking for modified repositories..."
+echo "Current repo: $CURRENT_REPO"
+echo ""
+echo "Were any external repositories modified during this work session?"
+echo "If so, provide their absolute paths (space-separated), or press Enter to skip:"
+read -r EXTERNAL_REPOS_INPUT
 
-# Generate commit message
-# 1) Read plan title/objectives, 2) Identify type (feat/fix/refactor/chore/docs/style), 3) Extract scope, 4) Summarize
-git add -A
-git commit -m "$(cat <<'EOF'
+# Process external repositories
+if [ -n "$EXTERNAL_REPOS_INPUT" ]; then
+    for EXTERNAL_REPO in $EXTERNAL_REPOS_INPUT; do
+        if [ -d "$EXTERNAL_REPO" ] && (cd "$EXTERNAL_REPO" && git rev-parse --git-dir > /dev/null 2>&1); then
+            # Check if this external repo has uncommitted changes
+            if [ -n "$(cd "$EXTERNAL_REPO" && git status --porcelain 2>/dev/null)" ]; then
+                REPOS_TO_COMMIT+=("$EXTERNAL_REPO")
+                echo "Added: $EXTERNAL_REPO (has uncommitted changes)"
+            else
+                echo "Skipped: $EXTERNAL_REPO (no uncommitted changes)"
+            fi
+        else
+            echo "Warning: $EXTERNAL_REPO is not a valid git repository"
+        fi
+    done
+fi
+
+echo ""
+echo "Repositories to commit: ${#REPOS_TO_COMMIT[@]}"
+for i in "${!REPOS_TO_COMMIT[@]}"; do
+    echo "  [$((i+1))] ${REPOS_TO_COMMIT[$i]}"
+done
+echo ""
+```
+
+### Step 5.2: Commit Current Repository
+
+```bash
+# Process current repository first
+if [ -n "${REPOS_TO_COMMIT[0]:-}" ]; then
+    MAIN_REPO="${REPOS_TO_COMMIT[0]}"
+    echo "Committing current repository: $MAIN_REPO"
+
+    # Check preconditions: [ ] No secrets (.env*, credentials)
+    git status
+    git diff
+
+    # Generate commit message from plan
+    # 1) Read plan title/objectives, 2) Identify type (feat/fix/refactor/chore/docs/style), 3) Extract scope, 4) Summarize
+    git add -A
+    git commit -m "$(cat <<'EOF'
 feat(scope): description
 
 - Change 1
@@ -157,6 +213,72 @@ feat(scope): description
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
 )"
+    echo "✅ Committed: $MAIN_REPO"
+else
+    echo "Not a git repo or no changes. Plan archived."
+fi
+```
+
+### Step 5.3: Commit Each External Repository
+
+```bash
+# Process any external repositories (skip index 0 which is current repo)
+if [ ${#REPOS_TO_COMMIT[@]} -gt 1 ]; then
+    echo ""
+    echo "Committing external repositories..."
+
+    for i in "${!REPOS_TO_COMMIT[@]}"; do
+        # Skip index 0 (current repo, already committed)
+        if [ "$i" -eq 0 ]; then
+            continue
+        fi
+
+        EXTERNAL_REPO="${REPOS_TO_COMMIT[$i]}"
+        echo ""
+        echo "[$((i+1))/${#REPOS_TO_COMMIT[@]}] Processing: $EXTERNAL_REPO"
+
+        # Navigate to external repo
+        ORIGINAL_DIR="$(pwd)"
+        cd "$EXTERNAL_REPO" || { echo "Warning: Cannot access $EXTERNAL_REPO, skipping..."; continue; }
+
+        # Verify changes exist
+        if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+            echo "No uncommitted changes, skipping..."
+            cd "$ORIGINAL_DIR"
+            continue
+        fi
+
+        # Show status and generate contextual commit message
+        echo "Repository: $(git rev-parse --show-toplevel 2>/dev/null || echo "$EXTERNAL_REPO")"
+        git status --short
+
+        # Generate commit message specific to this repository
+        # Analyze the changes in THIS repository to create appropriate message
+        PLAN_TITLE="${ACTIVE_PLAN_PATH:-.}"
+        if [ -f "$PLAN_TITLE" ]; then
+            PLAN_TITLE_BASE="$(grep -E '^# ' "$PLAN_TITLE" 2>/dev/null | head -1 | sed 's/^# //' || echo 'Update')"
+        else
+            PLAN_TITLE_BASE="Update"
+        fi
+
+        git add -A
+        git commit -m "${PLAN_TITLE_BASE}: Cross-repo changes from ${PLAN_TITLE_BASE}
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+
+        if [ $? -eq 0 ]; then
+            echo "✅ Committed: $EXTERNAL_REPO"
+        else
+            echo "⚠️ Failed to commit: $EXTERNAL_REPO (may have permission issues)"
+        fi
+
+        # Return to original directory
+        cd "$ORIGINAL_DIR" || exit 1
+    done
+
+    echo ""
+    echo "✅ All repositories committed"
+fi
 ```
 
 ---
