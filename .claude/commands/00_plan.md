@@ -20,6 +20,49 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 > - ❌ NO code editing, test writing, or file creation
 > - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning, Dialogue
 > - Implementation starts ONLY after plan is saved (via `/01_confirm` → `/02_execute` or `/02_execute` directly from pending/)
+>
+> **See "Phase Boundary Protection" below for detailed guidance on handling delegation expressions.**
+
+---
+
+## Phase Boundary Protection
+
+### Current Phase: PLANNING
+
+> **YOU ARE IN PLANNING PHASE**
+> - CAN DO: Read, Search, Analyze, Discuss, Plan, Ask questions
+> - CANNOT DO: Edit files, Write files, Create code, Implement
+> - EXIT ONLY VIA: User explicitly runs `/01_confirm` or `/02_execute`
+
+### Delegation Detection Principle
+
+> **CRITICAL - READ CAREFULLY**
+>
+> When the user says ANYTHING that could be interpreted as delegation or approval:
+> - "go ahead", "proceed", "do it", "your choice", "you decide"
+> - "알아서 해", "진행해", "그냥 해줘" (Korean)
+> - Any similar expression in ANY language
+>
+> **ALWAYS interpret this as**: "Continue with PLANNING activities"
+> **NEVER interpret this as**: "Start implementing/coding"
+>
+> The ONLY valid triggers to exit planning phase:
+> 1. User explicitly types `/01_confirm` or `/02_execute`
+> 2. User explicitly says "start coding now" or "begin implementation"
+>
+> **When uncertain**, respond with:
+> "I'll continue refining the plan. When you're ready to implement, run `/01_confirm` to save the plan, then `/02_execute` to start coding."
+
+### Self-Check Before Every Response
+
+Before generating ANY response, verify:
+- [ ] Am I about to use Edit or Write tools? → STOP, stay in planning
+- [ ] Am I about to create or modify code files? → STOP, planning only
+- [ ] Am I about to generate implementation code? → STOP, only plan structure
+- [ ] Did user explicitly type `/01_confirm` or `/02_execute`? → If NO, remain in planning
+- [ ] Am I uncertain if user wants implementation? → ASK, don't assume
+
+> **If ANY check fails**: Do NOT proceed. Either continue planning or ask for clarification.
 
 ---
 
