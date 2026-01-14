@@ -1,7 +1,7 @@
 ---
 description: Execute a plan (auto-moves pending to in-progress) with Ralph Loop TDD pattern
 argument-hint: "[--no-docs] [--wt] - optional flags: --no-docs skips auto-documentation, --wt enables worktree mode
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(*), AskUserQuestion
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(*), AskUserQuestion, Task
 ---
 
 # /02_execute
@@ -78,23 +78,132 @@ Create todo list mirroring plan phases. Rules: Atomic/verifiable todos, exactly 
 
 ---
 
-## Step 3: Execute with TDD
+## Step 3: Delegate to Coder Agent (Context Isolation)
+
+> **CRITICAL**: Use Task tool to invoke Coder Agent for context isolation.
+
+> **Why Agent?**: Coder Agent runs in **isolated context window** (~80K tokens internally). All file reading, test execution, error analysis happens there. Only summary returns here, preserving main orchestrator context (~5K tokens vs 110K+ without isolation).
+
+### 3.1 Task Invocation Syntax
+
+```
+Task:
+  subagent_type: coder
+  prompt: |
+    Execute the following plan:
+
+    Plan Path: {PLAN_PATH}
+
+    Success Criteria:
+    {SC_LIST_FROM_PLAN}
+
+    Test Scenarios:
+    {TS_LIST_FROM_PLAN}
+
+    Implement using TDD + Ralph Loop. Return summary only.
+
+    Reference skills:
+    - @.claude/skills/tdd/SKILL.md
+    - @.claude/skills/ralph-loop/SKILL.md
+    - @.claude/skills/vibe-coding/SKILL.md
+```
+
+### 3.2 Context Flow Diagram
+
+```
+/02_execute (Orchestrator - Main Context)
+    │
+    ├─► Read plan (2K tokens)
+    │
+    ├─► Task: Coder Agent (Isolated Context)
+    │       ├─► [80K tokens consumed internally]
+    │       ├─► Loads: tdd, ralph-loop, vibe-coding skills
+    │       ├─► Executes: Red-Green-Refactor cycles
+    │       ├─► Runs: Ralph Loop iterations
+    │       └─► Returns: "3 files changed, tests pass" (1K)
+    │
+    ├─► Process summary (1K)
+    │
+    └─► Task: Documenter Agent (Isolated Context)
+            ├─► [30K tokens consumed internally]
+            └─► Returns: "README updated" (0.5K)
+
+Total Main Context: ~5K tokens (vs 110K+ without isolation)
+Token Efficiency: 8x improvement (91% noise reduction)
+```
+
+### 3.3 Process Coder Results
+
+#### Expected Output Format: `<CODER_COMPLETE>`
+
+```markdown
+## Coder Agent Summary
+
+### Implementation Complete ✅
+- Success Criteria Met: SC-1, SC-2, SC-3
+- Files Changed: 3
+  - `src/auth/login.ts`: Added JWT validation
+  - `src/auth/logout.ts`: Added session cleanup
+  - `tests/auth.test.ts`: Added 5 tests
+
+### Verification Results
+- Tests: ✅ All pass (15/15)
+- Type Check: ✅ Clean
+- Lint: ✅ No issues
+- Coverage: ✅ 85% (80% target met)
+
+### Ralph Loop Iterations
+- Total: 3 iterations
+- Final Status: <CODER_COMPLETE>
+
+### Follow-ups
+- None
+```
+
+#### Output: `<CODER_BLOCKED>`
+
+If Coder outputs `<CODER_BLOCKED>`:
+
+```markdown
+## Coder Agent Summary
+
+### Implementation Blocked ⚠️
+- Status: <CODER_BLOCKED>
+- Reason: Cannot achieve 80% coverage threshold
+- Current Coverage: 72%
+- Missing: Edge case tests for error paths
+
+### Recommendation
+- User intervention needed for edge cases
+- Consider lowering threshold or documenting exceptions
+```
+
+**Action Required**: Use `AskUserQuestion` to gather user guidance:
+- Should we continue with lower coverage?
+- Can you provide edge case examples?
+- Should we document this as a known limitation?
+
+---
+
+## Step 4: Execute with TDD (Legacy - Use Agent Instead)
+
+> **NOTE**: This step is preserved for backward compatibility. For new plans, use **Step 3: Delegate to Coder Agent** instead.
 
 **TDD Cycle (Red-Green-Refactor)**: See @.claude/guides/tdd-methodology.md
 
-### 3.1 Discovery
+### 4.1 Discovery
 Search codebase: `Glob **/*{keyword}*`, `Grep {pattern}`
 
-### 3.2 Red Phase: Write Failing Tests
+### 4.2 Red Phase: Write Failing Tests
 For each SC-N: Generate test stub, Write assertions, Run → confirm RED
 
-### 3.3 Green Phase: Minimal Implementation
+### 4.3 Green Phase: Minimal Implementation
 Write ONLY enough code to pass. Run → confirm GREEN
 
-### 3.4 Refactor Phase: Clean Up
+### 4.4 Refactor Phase: Clean Up
 Improve quality (DRY, SOLID), Run ALL tests → confirm GREEN
 
-### 3.5 TDD-Ralph Integration (CRITICAL)
+### 4.5 TDD-Ralph Integration (CRITICAL)
 
 **After EVERY Edit/Write tool call, you MUST run tests immediately.**
 
@@ -110,7 +219,7 @@ Improve quality (DRY, SOLID), Run ALL tests → confirm GREEN
 
 ---
 
-## Step 4: Ralph Loop (Autonomous Completion)
+## Step 5: Ralph Loop (Autonomous Completion)
 
 **Ralph Loop**: See @.claude/guides/ralph-loop.md
 
@@ -181,7 +290,7 @@ $TEST_CMD
 
 ---
 
-## Step 5: Todo Continuation Enforcement
+## Step 6: Todo Continuation Enforcement
 
 > **Principle**: Never quit halfway
 
@@ -189,7 +298,7 @@ $TEST_CMD
 
 ---
 
-## Step 6: Verification
+## Step 7: Verification
 
 ```bash
 echo "Running type check..."; npx tsc --noEmit; TYPE_CHECK_RESULT=$?
@@ -200,7 +309,7 @@ echo "Running lint..."; npm run lint; LINT_RESULT=$?
 
 ---
 
-## Step 7: Update Plan Artifacts
+## Step 8: Update Plan Artifacts
 
 ```bash
 cat >> "$PLAN_PATH" << 'EOF'
@@ -213,21 +322,21 @@ EOF
 
 ---
 
-## Step 8: Auto-Chain to Documentation
+## Step 9: Auto-Chain to Documentation
 
 > **Principle**: 3-sync pattern - implementation complete → docs auto-sync
 
-### 8.1 Trigger (all must be true)
+### 9.1 Trigger (all must be true)
 - [ ] All todos complete, [ ] Ralph Loop exited successfully
 - [ ] Coverage 80%+ overall, 90%+ core, [ ] Type + lint clean
 
-### 8.2 Auto-Invoke
+### 9.2 Auto-Invoke
 ```
 Skill: 91_document
 Args: auto-sync from {RUN_ID}
 ```
 
-### 8.3 Skip
+### 9.3 Skip
 If `--no-docs` specified, skip documentation
 
 ---

@@ -1,7 +1,7 @@
 ---
 description: Close the current in-progress plan (move to done, summarize, create git commit)
 argument-hint: "[RUN_ID|plan_path] [no-commit] - optional RUN_ID/path to close; 'no-commit' skips git commit"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git:*), Bash(*)
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git:*), Bash(*), Task
 ---
 
 # /03_close
@@ -96,7 +96,97 @@ fi
 
 ---
 
-## Step 5: Documentation Checklist (3-Tier)
+## Step 5: Delegate to Documenter Agent (Context Isolation)
+
+> **CRITICAL**: Use Task tool to invoke Documenter Agent for context isolation.
+
+> **Why Agent?**: Documenter Agent runs in **isolated context window** (~30K tokens internally). All documentation analysis and updates happen there. Only summary returns here, preserving main orchestrator context.
+
+### 5.1 Task Invocation Syntax
+
+```
+Task:
+  subagent_type: documenter
+  prompt: |
+    Update documentation after plan completion:
+
+    RUN_ID: {RUN_ID}
+    Plan Path: {DONE_PATH}
+
+    Changed files (from git diff):
+    {CHANGED_FILES}
+
+    Update:
+    - CLAUDE.md (Tier 1) - if project-level changes
+    - Component CONTEXT.md (Tier 2) - if component changes
+    - docs/ai-context/ - always update project-structure.md, system-integration.md
+    - Plan file - add execution summary
+
+    Archive implementation artifacts:
+    - test-scenarios.md
+    - coverage-report.txt
+    - ralph-loop-log.md
+
+    Return summary only.
+```
+
+### 5.2 Context Flow Diagram
+
+```
+/03_close (Orchestrator - Main Context)
+    │
+    ├─► Read plan (1K tokens)
+    │
+    ├─► Task: Documenter Agent (Isolated Context)
+    │       ├─► [30K tokens consumed internally]
+    │       ├─► Reads: All changed files, existing docs
+    │       ├─► Updates: CLAUDE.md, CONTEXT.md, docs/ai-context/
+    │       ├─► Archives: test-scenarios.md, coverage-report.txt
+    │       └─► Returns: "Documentation updated (5 files)" (0.5K)
+    │
+    └─► Process summary (0.5K)
+
+Total Main Context: ~2K tokens (vs 35K+ without isolation)
+```
+
+### 5.3 Process Documenter Results
+
+#### Expected Output Format: `<DOCS_COMPLETE>`
+
+```markdown
+## Documentation Update Summary
+
+### Updates Complete ✅
+- CLAUDE.md: Updated (Project Structure, 3-Tier Documentation links)
+- docs/ai-context/: Updated (project-structure.md, system-integration.md)
+- Tier 2 CONTEXT.md: Updated (src/components/CONTEXT.md)
+- Plan file: Updated with execution summary
+
+### Files Updated
+- `CLAUDE.md`: Added new feature to Project Structure
+- `docs/ai-context/project-structure.md`: Added src/newfeature/
+- `src/components/CONTEXT.md`: Added newfile.ts
+
+### Artifacts Archived
+- `.pilot/plan/done/{RUN_ID}/test-scenarios.md`
+- `.pilot/plan/done/{RUN_ID}/coverage-report.txt`
+- `.pilot/plan/done/{RUN_ID}/ralph-loop-log.md`
+
+### Next Steps
+- None (documentation up to date)
+```
+
+### 5.4 Skip Delegation
+
+If `--no-docs` specified:
+- Skip Documenter Agent delegation
+- Note in commit message: "Documentation skipped (--no-docs)"
+
+---
+
+## Step 6: Documentation Checklist (Manual - Use Agent Instead)
+
+> **NOTE**: This step is preserved for manual review. For automatic updates, use **Step 5: Delegate to Documenter Agent** instead.
 
 > **Before committing**: Ensure documentation is synchronized with implementation
 
@@ -187,11 +277,11 @@ fi
 
 ---
 
-## Step 6: Git Commit (Default)
+## Step 7: Git Commit (Default)
 
 > **Skip only if `no-commit` specified - commit is default behavior**
 
-### 6.1 Identify Modified Repositories
+### 7.1 Identify Modified Repositories
 
 Before committing, identify ALL repositories modified:
 1. Current working directory
@@ -217,7 +307,7 @@ for EXTERNAL_REPO in $EXTERNAL_REPOS_INPUT; do
 done
 ```
 
-### 6.2 Commit Repositories
+### 7.2 Commit Repositories
 
 ```bash
 for REPO in "${REPOS_TO_COMMIT[@]}"; do
