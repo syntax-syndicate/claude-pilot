@@ -83,6 +83,55 @@ Existing Patterns: [list]
 
 **Test Environment Detection**: See @.claude/guides/test-environment.md
 
+> **⚠️ COLLECT FOR HANDOFF**: During exploration, collect:
+> - Files read (path + purpose + key lines)
+> - Research findings (source + topic + insight)
+> - Discovered dependencies
+> - Warnings & gotchas
+> - Key decisions made
+> **See**: Step 0.5 for execution context template
+
+---
+
+## Step 0.5: Compile Execution Context
+
+> **Purpose**: Transfer planner's discoveries to executor without re-exploration
+> **Timing**: After Step 0 exploration, BEFORE Step 1 requirements
+
+### Collect from Exploration
+
+As you explore in Step 0, collect information for these tables:
+
+#### Explored Files
+| File | Purpose | Key Lines | Notes |
+|------|---------|-----------|-------|
+| `.claude/commands/00_plan.md` | Plan command template | 1-261 | Current structure |
+| `{file_path}` | {Why read} | {Line range} | {Key insight} |
+
+#### Research Findings
+| Source | Topic | Key Insight | URL |
+|--------|-------|-------------|-----|
+| {Documentation} | {Topic} | {Key takeaway} | {link} |
+
+#### Discovered Dependencies
+| Dependency | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| {package} | {version} | {Why needed} | New/Existing |
+
+#### Warnings & Gotchas
+| Issue | Location | Recommendation |
+|-------|----------|----------------|
+| {Potential problem} | {File/function} | {How to handle} |
+
+#### Key Decisions Made
+| Decision | Rationale | Alternative Considered |
+|----------|-----------|----------------------|
+| {Choice} | {Why this way} | {Other option} |
+
+### Output Format
+
+This becomes the **"Execution Context (Planner Handoff)"** section in the final plan document.
+
 ---
 
 ## Step 1: Requirements Elicitation
@@ -205,6 +254,7 @@ New files, existing modifications, integration points
 ## PRP Analysis (What/Why/How/Success Criteria/Constraints)
 ## Scope
 ## Test Environment (Detected)
+## Execution Context (Planner Handoff)
 ## External Service Integration [if applicable]
 ## Architecture
 ## Execution Plan
