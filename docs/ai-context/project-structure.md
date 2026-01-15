@@ -8,11 +8,11 @@
 ## Technology Stack
 
 ```yaml
-Framework: Node.js CLI Tool
-Language: TypeScript
-Package Manager: npm
-Version: 3.2.0
-Deployment: npm package distribution
+Framework: Python CLI Tool
+Language: Python 3.10+
+Package Manager: Poetry/pip
+Version: 3.3.1
+Deployment: PyPI package distribution
 ```
 
 ---
@@ -77,12 +77,17 @@ claude-pilot/
 │   │   └── project-structure.md
 │   ├── plan-gap-analysis-external-api-calls.md
 │   └── slash-command-enhancement-examples.md
-├── scripts/                # Build/publish scripts
-├── src/                    # Source code (if any)
+├── scripts/                # Sync and build scripts
+│   ├── sync-templates.sh   # Pre-deploy templates sync
+│   └── verify-version-sync.sh  # Version consistency check
+├── src/                    # Source code
+│   └── claude_pilot/       # Main package
+│       ├── templates/      # Deployment templates (synced)
+│       └── config.py       # MANAGED_FILES configuration
 ├── tests/                  # Test files
 ├── CLAUDE.md               # Tier 1: Project documentation
 ├── README.md               # Project README
-├── package.json            # npm configuration
+├── pyproject.toml          # Package configuration
 └── CHANGELOG.md            # Version history
 ```
 
@@ -319,6 +324,16 @@ You are the Coder Agent. Implement features using TDD...
 
 ## Version History
 
+### v3.3.1 (2026-01-15)
+
+- Fixed version triple-split issue (all 6 files now synced to 3.3.1)
+- Added `scripts/sync-templates.sh` for pre-deploy template sync
+- Added `scripts/verify-version-sync.sh` for version consistency checks
+- Enhanced `/999_publish` with Step 0.5 (automatic templates sync)
+- Synced 44 template files with current `.claude` content
+- Updated `config.py` MANAGED_FILES (3 added, 3 removed)
+- Templates folder now fully synchronized with development files
+
 ### v3.2.1 (2026-01-15)
 
 - Enhanced `/00_plan` with Phase Boundary Protection (Level 3)
@@ -381,4 +396,4 @@ You are the Coder Agent. Implement features using TDD...
 ---
 
 **Last Updated**: 2026-01-15
-**Template**: claude-pilot 3.2.1
+**Template**: claude-pilot 3.3.1

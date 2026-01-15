@@ -24,6 +24,81 @@ Check tools (python3, twine, git), git status, and branch. Warn if uncommitted c
 
 ---
 
+## Step 0.5: Sync Templates (CRITICAL)
+
+> **⚠️ CRITICAL**: Templates must be synced before version bump.
+> This ensures PyPI package includes latest template content.
+
+### 0.5.1 Sync Commands
+
+Copy all command files except 999_publish.md to templates/.claude/commands/:
+
+```bash
+echo "=== Syncing Templates (Step 0.5) ==="
+echo ""
+echo "0.5.1 Syncing commands..."
+for f in 00_plan 01_confirm 02_execute 03_close 90_review 91_document 92_init; do
+  cp .claude/commands/${f}.md src/claude_pilot/templates/.claude/commands/
+  echo "  ✅ ${f}.md"
+done
+```
+
+### 0.5.2 Sync Skills
+
+Copy SKILL.md and REFERENCE.md files to templates/.claude/skills/:
+
+```bash
+echo "0.5.2 Syncing skills..."
+for skill in git-master ralph-loop tdd vibe-coding; do
+  mkdir -p src/claude_pilot/templates/.claude/skills/${skill}
+  cp .claude/skills/${skill}/SKILL.md src/claude_pilot/templates/.claude/skills/${skill}/
+  [ -f .claude/skills/${skill}/REFERENCE.md ] && \
+    cp .claude/skills/${skill}/REFERENCE.md src/claude_pilot/templates/.claude/skills/${skill}/
+  echo "  ✅ ${skill}/"
+done
+```
+
+### 0.5.3 Sync Other Files
+
+Copy guides, agents, rules, templates, hooks:
+
+```bash
+echo "0.5.3 Syncing guides..."
+cp .claude/guides/*.md src/claude_pilot/templates/.claude/guides/
+
+echo "0.5.4 Syncing agents..."
+cp .claude/agents/*.md src/claude_pilot/templates/.claude/agents/
+
+echo "0.5.5 Syncing rules..."
+cp -r .claude/rules/* src/claude_pilot/templates/.claude/rules/
+
+echo "0.5.6 Syncing templates..."
+cp .claude/templates/*.template src/claude_pilot/templates/.claude/templates/
+[ -f .claude/templates/gap-checklist.md ] && \
+  cp .claude/templates/gap-checklist.md src/claude_pilot/templates/.claude/templates/
+
+echo "0.5.7 Syncing hooks..."
+mkdir -p src/claude_pilot/templates/.claude/scripts/hooks
+cp .claude/scripts/hooks/*.sh src/claude_pilot/templates/.claude/scripts/hooks/
+
+echo ""
+echo "✅ Templates sync complete"
+```
+
+### 0.5.4 Verify Sync
+
+Compare file counts and sizes between .claude and templates/.claude:
+
+```bash
+echo "Verifying sync..."
+SOURCE_COUNT=$(find .claude -type f -name "*.md" -o -name "*.sh" -o -name "*.template" | wc -l)
+DEST_COUNT=$(find src/claude_pilot/templates/.claude -type f -name "*.md" -o -name "*.sh" -o -name "*.template" | wc -l)
+echo "Source files: $SOURCE_COUNT"
+echo "Template files: $DEST_COUNT"
+```
+
+---
+
 ## Step 1: Determine Version Bump Type
 
 Parse `$ARGUMENTS`: `major` → X.0.0, `minor` → x.Y.0, `patch` → x.y.Z (default)
@@ -58,6 +133,8 @@ PYPROJECT_VERSION="$CURRENT_VERSION"
 INIT_VERSION="$(grep '__version__' src/claude_pilot/__init__.py | head -1 | sed 's/.*= *//' | tr -d '"'"'"' ')"
 CONFIG_VERSION="$(grep 'VERSION' src/claude_pilot/config.py | head -1 | sed 's/.*= *//' | tr -d '"'"'"' ')"
 INSTALL_VERSION="$(grep 'VERSION=' install.sh | head -1 | sed 's/.*=//' | tr -d '"'"'"' ')"
+ROOT_PILOT_VERSION="$(cat .claude/.pilot-version 2>/dev/null || echo 'missing')"
+TEMPLATE_PILOT_VERSION="$(cat src/claude_pilot/templates/.claude/.pilot-version 2>/dev/null || echo 'missing')"
 
 # Display all versions
 echo "File versions:"
@@ -65,6 +142,8 @@ echo "  pyproject.toml:           $PYPROJECT_VERSION"
 echo "  __init__.py:              $INIT_VERSION"
 echo "  config.py:                $CONFIG_VERSION"
 echo "  install.sh:               $INSTALL_VERSION"
+echo "  .claude/.pilot-version:   $ROOT_PILOT_VERSION"
+echo "  templates/.pilot-version: $TEMPLATE_PILOT_VERSION"
 echo ""
 ```
 
@@ -85,6 +164,14 @@ fi
 if [ "$INSTALL_VERSION" != "$CURRENT_VERSION" ]; then
     MISMATCH_FOUND=true
     MISMATCHED_FILES="$MISMATCHED_FILES install.sh"
+fi
+if [ "$ROOT_PILOT_VERSION" != "$CURRENT_VERSION" ]; then
+    MISMATCH_FOUND=true
+    MISMATCHED_FILES="$MISMATCHED_FILES .claude/.pilot-version"
+fi
+if [ "$TEMPLATE_PILOT_VERSION" != "$CURRENT_VERSION" ]; then
+    MISMATCH_FOUND=true
+    MISMATCHED_FILES="$MISMATCHED_FILES src/claude_pilot/templates/.claude/.pilot-version"
 fi
 ```
 
@@ -160,6 +247,16 @@ echo "   ✅ config.py: $CURRENT_VERSION → $NEW_VERSION"
 echo "4. Updating install.sh..."
 sed -i '' "s/VERSION=\"$CURRENT_VERSION\"/VERSION=\"$NEW_VERSION\"/" install.sh
 echo "   ✅ install.sh: $CURRENT_VERSION → $NEW_VERSION"
+
+# Update .claude/.pilot-version
+echo "5. Updating .claude/.pilot-version..."
+echo "$NEW_VERSION" > .claude/.pilot-version
+echo "   ✅ .claude/.pilot-version: $CURRENT_VERSION → $NEW_VERSION"
+
+# Update templates/.claude/.pilot-version
+echo "6. Updating templates/.claude/.pilot-version..."
+echo "$NEW_VERSION" > src/claude_pilot/templates/.claude/.pilot-version
+echo "   ✅ templates/.pilot-version: $CURRENT_VERSION → $NEW_VERSION"
 echo ""
 
 echo "=== All Version Files Updated ✅ ==="
@@ -173,6 +270,8 @@ echo "=== All Version Files Updated ✅ ==="
 | `src/claude_pilot/__init__.py` | `__version__ = "X.Y.Z"` | ✅ |
 | `src/claude_pilot/config.py` | `VERSION = "X.Y.Z"` | ✅ |
 | `install.sh` | `VERSION="X.Y.Z"` | ✅ |
+| `.claude/.pilot-version` | File content | ✅ |
+| `src/claude_pilot/templates/.claude/.pilot-version` | File content | ✅ |
 
 ---
 
@@ -195,12 +294,16 @@ PYPROJECT_VERSION="$(grep '^version' pyproject.toml | head -1 | sed 's/.*= *//' 
 INIT_VERSION="$(grep '__version__' src/claude_pilot/__init__.py | head -1 | sed 's/.*= *//' | tr -d '"'"'"' ')"
 CONFIG_VERSION="$(grep 'VERSION' src/claude_pilot/config.py | head -1 | sed 's/.*= *//' | tr -d '"'"'"' ')"
 INSTALL_VERSION="$(grep 'VERSION=' install.sh | head -1 | sed 's/.*=//' | tr -d '"'"'"' ')"
+ROOT_PILOT_VERSION="$(cat .claude/.pilot-version 2>/dev/null || echo 'missing')"
+TEMPLATE_PILOT_VERSION="$(cat src/claude_pilot/templates/.claude/.pilot-version 2>/dev/null || echo 'missing')"
 
 echo "File versions after update:"
 echo "  pyproject.toml:           $PYPROJECT_VERSION"
 echo "  __init__.py:              $INIT_VERSION"
 echo "  config.py:                $CONFIG_VERSION"
 echo "  install.sh:               $INSTALL_VERSION"
+echo "  .claude/.pilot-version:   $ROOT_PILOT_VERSION"
+echo "  templates/.pilot-version: $TEMPLATE_PILOT_VERSION"
 echo ""
 ```
 
@@ -225,6 +328,14 @@ fi
 if [ "$INSTALL_VERSION" != "$NEW_VERSION" ]; then
     MISMATCH_FOUND=true
     MISMATCHED_FILES="$MISMATCHED_FILES install.sh"
+fi
+if [ "$ROOT_PILOT_VERSION" != "$NEW_VERSION" ]; then
+    MISMATCH_FOUND=true
+    MISMATCHED_FILES="$MISMATCHED_FILES .claude/.pilot-version"
+fi
+if [ "$TEMPLATE_PILOT_VERSION" != "$NEW_VERSION" ]; then
+    MISMATCH_FOUND=true
+    MISMATCHED_FILES="$MISMATCHED_FILES templates/.pilot-version"
 fi
 ```
 
@@ -309,8 +420,9 @@ Wait 3s for CDN propagation, run `pip3 install --dry-run` to verify version avai
 ## Success Criteria
 
 - [ ] Pre-publish version check passed (Step 3)
+- [ ] Templates synced successfully (Step 0.5)
 - [ ] Version bumped to new version
-- [ ] All version files synchronized (verified in Step 5)
+- [ ] All 6 version files synchronized (verified in Step 5)
 - [ ] Post-update verification passed (Step 5)
 - [ ] Package built successfully
 - [ ] **Package contents verified (agents/, skills/, AGENT.md.template included)** (Step 7-1)

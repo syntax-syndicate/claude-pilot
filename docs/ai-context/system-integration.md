@@ -14,6 +14,7 @@
                                                                                    |
                                                                                    v
                                                                           /90_review (anytime)
+                                                                          /999_publish (deploy)
 ```
 
 ### Phase Boundary Protection (Updated 2026-01-15)
@@ -176,6 +177,82 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation and
 | Gap Detection | Reviews external services | → Interactive Recovery |
 | `/02_execute` Step 1 | Atomic plan move (pending → in_progress) | → `.pilot/plan/in_progress/` |
 | `/02_execute` Step 2+ | Reads plan file | ← `.pilot/plan/in_progress/` |
+| `/999_publish` Step 0.5 | Syncs templates | `.claude/` → `src/claude_pilot/templates/.claude/` |
+| `/999_publish` Step 3-5 | Updates all 6 version files | pyproject.toml, __init__.py, config.py, install.sh, .pilot-version files |
+
+---
+
+## /999_publish Command Workflow
+
+The `/999_publish` command prepares and deploys claude-pilot to PyPI. **Updated with Step 0.5 (2026-01-15)** to automatically sync templates before version bump.
+
+### Step Sequence
+
+1. **Step 0.5: Sync Templates (CRITICAL)** - NEW
+   - 0.5.1 Sync commands (excluding 999_publish.md)
+   - 0.5.2 Sync skills (SKILL.md + REFERENCE.md)
+   - 0.5.3 Sync guides, agents, rules, templates, hooks
+   - 0.5.4 Verify sync (file counts and sizes)
+
+2. **Step 1: Pre-Flight Verification**
+   - Check git status (must be clean)
+   - Verify tests pass
+   - Verify type check passes
+
+3. **Step 2: Extract Current Version**
+   - Parse pyproject.toml for version
+   - Extract all 6 version locations:
+     - pyproject.toml
+     - src/claude_pilot/__init__.py
+     - src/claude_pilot/config.py
+     - install.sh
+     - .claude/.pilot-version
+     - src/claude_pilot/templates/.claude/.pilot-version
+
+4. **Step 3: Check Version Mismatch**
+   - Compare all 6 version locations
+   - Report mismatches if found
+   - Exit if mismatch detected
+
+5. **Step 4: Bump Version**
+   - Prompt for new version (patch/minor/major)
+   - Update all 6 version files
+   - Commit version bump
+
+6. **Step 5: Build & Verify**
+   - Build package
+   - Verify version in build artifacts
+   - Run tests against built package
+
+7. **Step 6: Deploy to PyPI**
+   - Publish to PyPI
+   - Verify deployment
+
+8. **Step 7: Update .pilot-version Files**
+   - Update .claude/.pilot-version
+   - Update templates/.claude/.pilot-version
+   - Verify all 6 files show new version
+
+### Integration Points
+
+| Component | Integration | Data Flow |
+|-----------|-------------|-----------|
+| `/999_publish` Step 0.5 | Syncs templates | `.claude/` → `src/claude_pilot/templates/.claude/` |
+| `/999_publish` Step 4 | Checks version | Reads all 6 version files |
+| `/999_publish` Step 5 | Updates version | Writes to all 6 version files |
+| `scripts/sync-templates.sh` | Automates sync | Called by Step 0.5 |
+| `scripts/verify-version-sync.sh` | Verifies sync | Called after version update |
+
+### Version File Locations
+
+| File | Path | Purpose |
+|------|------|---------|
+| pyproject.toml | `/pyproject.toml` | Source of truth for package version |
+| __init__.py | `/src/claude_pilot/__init__.py` | Runtime version access |
+| config.py | `/src/claude_pilot/config.py` | Configuration version |
+| install.sh | `/install.sh` | Installation script version |
+| .pilot-version | `/.claude/.pilot-version` | Development template version |
+| templates/.pilot-version | `/src/claude_pilot/templates/.claude/.pilot-version` | Deployment template version |
 
 ---
 
@@ -612,4 +689,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-15
-**Template**: claude-pilot 3.2.1
+**Template**: claude-pilot 3.3.1

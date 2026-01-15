@@ -254,5 +254,5 @@ AI       → G (Prompts)
 ## See Also
 
 - @.claude/guides/gap-detection.md - External service verification
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition

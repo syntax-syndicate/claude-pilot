@@ -43,6 +43,7 @@ MANAGED_FILES: list[tuple[str, str]] = [
     (".claude/agents/*.md", ".claude/agents/"),
     # Skills (new - progressive disclosure knowledge)
     (".claude/skills/**/SKILL.md", ".claude/skills/"),
+    (".claude/skills/**/REFERENCE.md", ".claude/skills/"),
     # Templates
     (".claude/templates/CONTEXT.md.template", ".claude/templates/CONTEXT.md.template"),
     (
@@ -55,6 +56,7 @@ MANAGED_FILES: list[tuple[str, str]] = [
     ),
     (".claude/templates/SKILL.md.template", ".claude/templates/SKILL.md.template"),
     (".claude/templates/AGENT.md.template", ".claude/templates/AGENT.md.template"),
+    (".claude/templates/gap-checklist.md", ".claude/templates/gap-checklist.md"),
     # Hooks
     (".claude/scripts/hooks/typecheck.sh", ".claude/scripts/hooks/typecheck.sh"),
     (".claude/scripts/hooks/lint.sh", ".claude/scripts/hooks/lint.sh"),
@@ -66,10 +68,8 @@ MANAGED_FILES: list[tuple[str, str]] = [
     (".claude/rules/core/workflow.md", ".claude/rules/core/workflow.md"),
     (".claude/rules/documentation/tier-rules.md", ".claude/rules/documentation/tier-rules.md"),
     # Guides (new - methodology documentation)
-    (".claude/guides/tdd-methodology.md", ".claude/guides/tdd-methodology.md"),
-    (".claude/guides/ralph-loop.md", ".claude/guides/ralph-loop.md"),
-    (".claude/guides/vibe-coding.md", ".claude/guides/vibe-coding.md"),
     (".claude/guides/prp-framework.md", ".claude/guides/prp-framework.md"),
+    (".claude/guides/parallel-execution.md", ".claude/guides/parallel-execution.md"),
     (".claude/guides/review-checklist.md", ".claude/guides/review-checklist.md"),
     (".claude/guides/gap-detection.md", ".claude/guides/gap-detection.md"),
     (".claude/guides/3tier-documentation.md", ".claude/guides/3tier-documentation.md"),

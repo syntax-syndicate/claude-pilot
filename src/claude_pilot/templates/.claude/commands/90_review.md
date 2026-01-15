@@ -13,17 +13,107 @@ _Review plan for completeness, gaps, and quality issues before execution._
 - **Comprehensive**: Multi-angle review covering mandatory, extended, and gap detection
 - **Actionable**: Findings map directly to plan sections
 - **Severity-based**: BLOCKING → Interactive Recovery
+- **Agent Support**: Can be invoked via plan-reviewer agent for context isolation
 
 **Review Checklist**: See @.claude/guides/review-checklist.md
 **Gap Detection**: See @.claude/guides/gap-detection.md
-**Vibe Coding**: See @.claude/guides/vibe-coding.md
+**Vibe Coding**: See @.claude/skills/vibe-coding/SKILL.md
+
+## Agent Invocation Pattern
+
+This command can be invoked directly OR via the plan-reviewer agent:
+
+### Direct Invocation
+```bash
+/90_review {plan_path}
+```
+
+### Via Plan-Reviewer Agent (Recommended for Complex Plans)
+
+### 🚀 MANDATORY ACTION: Plan-Reviewer Agent Invocation
+
+> **YOU MUST invoke the plan-reviewer agent NOW using the Task tool.**
+> This is not optional. Execute this Task tool call immediately.
+
+**EXECUTE IMMEDIATELY - DO NOT SKIP**:
+
+```markdown
+Task:
+  subagent_type: plan-reviewer
+  prompt: |
+    Review the plan file at: {PLAN_PATH}
+
+    Perform comprehensive analysis:
+    1. Completeness Check (all sections present)
+    2. Gap Detection (external services, APIs, databases, async, env vars, error handling)
+    3. Feasibility Analysis (technical approach sound)
+    4. Clarity & Specificity (verifiable SCs, clear steps)
+    5. Multi-angle review (Security, Quality, Performance, Testing, Architecture)
+
+    Return structured review with:
+    - Severity levels (BLOCKING, Critical, Warning, Suggestion)
+    - Specific recommendations for each issue
+    - Positive notes for good practices
+    - Overall assessment
+```
+
+**VERIFICATION**: After sending Task call, wait for plan-reviewer agent to return results before proceeding to Step 1.
+
+### Parallel Multi-Angle Review (For Complex Plans)
+
+### 🚀 MANDATORY ACTION: Parallel Plan-Reviewer Agent Invocation
+
+> **For large or complex plans, YOU MUST invoke multiple plan-reviewer agents NOW using the Task tool.**
+> This is not optional. Execute these Task tool calls immediately in the same message.
+
+**EXECUTE IMMEDIATELY - DO NOT SKIP**:
+
+```markdown
+# Parallel review angles (optional, for very complex plans)
+Task:
+  subagent_type: plan-reviewer
+  prompt: |
+    Review plan from SECURITY angle:
+    - External API security considerations
+    - Input validation
+    - Authentication/authorization
+    - Secret management
+    Plan Path: {PLAN_PATH}
+
+Task:
+  subagent_type: plan-reviewer
+  prompt: |
+    Review plan from QUALITY angle:
+    - Vibe Coding compliance
+    - Code quality standards
+    - Testing coverage
+    - Documentation completeness
+    Plan Path: {PLAN_PATH}
+
+Task:
+  subagent_type: plan-reviewer
+  prompt: |
+    Review plan from ARCHITECTURE angle:
+    - System design
+    - Component relationships
+    - Scalability considerations
+    - Integration points
+    Plan Path: {PLAN_PATH}
+```
+
+**VERIFICATION**: After sending Task calls, wait for all plan-reviewer agents to return results before proceeding.
+
+**Note**: Parallel review is resource-intensive. Use only for complex, high-stakes plans where deep analysis from multiple angles is justified.
 
 ---
 
 ## Step 0: Load Plan
 
 ```bash
-PLAN_PATH="$(ls -1tr .pilot/plan/in_progress/*/*.md .pilot/plan/pending/*.md 2>/dev/null | head -1)"
+# Project root detection (always use project root, not current directory)
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+PLAN_PATH="$(ls -1tr "$PROJECT_ROOT/.pilot/plan/in_progress"/*/*.md "$PROJECT_ROOT/.pilot/plan/pending"/*.md 2>/dev/null | head -1)"
 [ -z "$PLAN_PATH" ] && { echo "No plan found" >&2; exit 1; }
 echo "Reviewing: $PLAN_PATH"
 ```
@@ -116,7 +206,7 @@ Execute all 8 reviews for every plan:
 
 ## Step 4: Vibe Coding Compliance
 
-**Vibe Coding**: See @.claude/guides/vibe-coding.md
+**Vibe Coding**: See @.claude/skills/vibe-coding/SKILL.md
 
 | Target | Limit | Check |
 |--------|-------|-------|
@@ -273,7 +363,7 @@ Execute all 8 reviews for every plan:
 ## Related Guides
 - @.claude/guides/review-checklist.md - Comprehensive review checklist
 - @.claude/guides/gap-detection.md - External service verification
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 
 ---
 

@@ -475,9 +475,10 @@ Co-Authored-By: Claude <noreply@anthropic.com>
 ## Further Reading
 
 ### Internal Documentation
-- @.claude/guides/tdd-methodology.md - Red-Green-Refactor cycle
-- @.claude/guides/ralph-loop.md - Autonomous completion loop
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/git-master/REFERENCE.md - Advanced Git patterns, branch strategies, collaboration
+- @.claude/skills/tdd/SKILL.md - Red-Green-Refactor cycle
+- @.claude/skills/ralph-loop/SKILL.md - Autonomous completion loop
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 
 ### External Resources
 - [Conventional Commits](https://www.conventionalcommits.org/)

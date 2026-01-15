@@ -1,7 +1,7 @@
 ---
 description: Close the current in-progress plan (move to done, summarize, create git commit)
 argument-hint: "[RUN_ID|plan_path] [no-commit] - optional RUN_ID/path to close; 'no-commit' skips git commit"
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git:*), Bash(*)
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash(git:*), Bash(*), Task
 ---
 
 # /03_close
@@ -42,14 +42,17 @@ fi
 ## Step 2: Locate Active Plan
 
 ```bash
-mkdir -p .pilot/plan/active
+# Project root detection (always use project root, not current directory)
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+
+mkdir -p "$PROJECT_ROOT/.pilot/plan/active"
 BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo detached)"
 KEY="$(printf "%s" "$BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
-ACTIVE_PTR=".pilot/plan/active/${KEY}.txt"
+ACTIVE_PTR="$PROJECT_ROOT/.pilot/plan/active/${KEY}.txt"
 
 # Priority: explicit args, RUN_ID, active pointer
 [ -f "$ACTIVE_PTR" ] && ACTIVE_PLAN_PATH="$(cat "$ACTIVE_PTR")"
-[ -z "$ACTIVE_PLAN_PATH" ] && [ -n "$RUN_ID" ] && ACTIVE_PLAN_PATH=".pilot/plan/in_progress/${RUN_ID}.md"
+[ -z "$ACTIVE_PLAN_PATH" ] && [ -n "$RUN_ID" ] && ACTIVE_PLAN_PATH="$PROJECT_ROOT/.pilot/plan/in_progress/${RUN_ID}.md"
 
 [ -z "$ACTIVE_PLAN_PATH" ] || [ ! -f "$ACTIVE_PLAN_PATH" ] && { echo "No active plan" >&2; exit 1; }
 ```
@@ -70,7 +73,7 @@ If not complete: Update plan with remaining items, don't move to done
 ## Step 4: Move to Done
 
 ```bash
-mkdir -p .pilot/plan/done
+mkdir -p "$PROJECT_ROOT/.pilot/plan/done"
 
 # Extract RUN_ID (file or folder format)
 if printf "%s" "$ACTIVE_PLAN_PATH" | grep -q '/plan.md$'; then
@@ -79,12 +82,12 @@ else
     RUN_ID="$(basename "$ACTIVE_PLAN_PATH" .md)"; IS_FOLDER_FORMAT=false
 fi
 
-DONE_PATH=".pilot/plan/done/${RUN_ID}.md"
-[ -e "$DONE_PATH" ] && DONE_PATH=".pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S).md"
+DONE_PATH="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}.md"
+[ -e "$DONE_PATH" ] && DONE_PATH="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S).md"
 
 if [ "$IS_FOLDER_FORMAT" = true ]; then
-    DONE_DIR=".pilot/plan/done/${RUN_ID}"
-    [ -e "$DONE_DIR" ] && DONE_DIR=".pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S)"
+    DONE_DIR="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}"
+    [ -e "$DONE_DIR" ] && DONE_DIR="$PROJECT_ROOT/.pilot/plan/done/${RUN_ID}_closed_$(date +%Y%m%d_%H%M%S)"
     mv "$(dirname "$ACTIVE_PLAN_PATH")" "$DONE_DIR"
 else
     mv "$ACTIVE_PLAN_PATH" "$DONE_PATH"
@@ -96,7 +99,102 @@ fi
 
 ---
 
-## Step 5: Documentation Checklist (3-Tier)
+## Step 5: Delegate to Documenter Agent (Context Isolation)
+
+### 🚀 MANDATORY ACTION: Documenter Agent Invocation
+
+> **CRITICAL**: YOU MUST invoke the Documenter Agent NOW using the Task tool for context isolation.
+> This is not optional. Execute this Task tool call immediately.
+
+> **Why Agent?**: Documenter Agent runs in **isolated context window** (~30K tokens internally). All documentation analysis and updates happen there. Only summary returns here, preserving main orchestrator context.
+
+**EXECUTE IMMEDIATELY - DO NOT SKIP** (unless `--no-docs` specified):
+
+```markdown
+Task:
+  subagent_type: documenter
+  prompt: |
+    Update documentation after plan completion:
+
+    RUN_ID: {RUN_ID}
+    Plan Path: {DONE_PATH}
+
+    Changed files (from git diff):
+    {CHANGED_FILES}
+
+    Update:
+    - CLAUDE.md (Tier 1) - if project-level changes
+    - Component CONTEXT.md (Tier 2) - if component changes
+    - docs/ai-context/ - always update project-structure.md, system-integration.md
+    - Plan file - add execution summary
+
+    Archive implementation artifacts:
+    - test-scenarios.md
+    - coverage-report.txt
+    - ralph-loop-log.md
+
+    Return summary only.
+```
+
+**VERIFICATION**: After sending Task call, wait for Documenter agent to return results before proceeding to Step 5.3.
+
+### 5.2 Context Flow Diagram
+
+```
+/03_close (Orchestrator - Main Context)
+    │
+    ├─► Read plan (1K tokens)
+    │
+    ├─► Task: Documenter Agent (Isolated Context)
+    │       ├─► [30K tokens consumed internally]
+    │       ├─► Reads: All changed files, existing docs
+    │       ├─► Updates: CLAUDE.md, CONTEXT.md, docs/ai-context/
+    │       ├─► Archives: test-scenarios.md, coverage-report.txt
+    │       └─► Returns: "Documentation updated (5 files)" (0.5K)
+    │
+    └─► Process summary (0.5K)
+
+Total Main Context: ~2K tokens (vs 35K+ without isolation)
+```
+
+### 5.3 Process Documenter Results
+
+#### Expected Output Format: `<DOCS_COMPLETE>`
+
+```markdown
+## Documentation Update Summary
+
+### Updates Complete ✅
+- CLAUDE.md: Updated (Project Structure, 3-Tier Documentation links)
+- docs/ai-context/: Updated (project-structure.md, system-integration.md)
+- Tier 2 CONTEXT.md: Updated (src/components/CONTEXT.md)
+- Plan file: Updated with execution summary
+
+### Files Updated
+- `CLAUDE.md`: Added new feature to Project Structure
+- `docs/ai-context/project-structure.md`: Added src/newfeature/
+- `src/components/CONTEXT.md`: Added newfile.ts
+
+### Artifacts Archived
+- `.pilot/plan/done/{RUN_ID}/test-scenarios.md`
+- `.pilot/plan/done/{RUN_ID}/coverage-report.txt`
+- `.pilot/plan/done/{RUN_ID}/ralph-loop-log.md`
+
+### Next Steps
+- None (documentation up to date)
+```
+
+### 5.4 Skip Delegation
+
+If `--no-docs` specified:
+- Skip Documenter Agent delegation
+- Note in commit message: "Documentation skipped (--no-docs)"
+
+---
+
+## Step 6: Documentation Checklist (Manual - Use Agent Instead)
+
+> **NOTE**: This step is preserved for manual review. For automatic updates, use **Step 5: Delegate to Documenter Agent** instead.
 
 > **Before committing**: Ensure documentation is synchronized with implementation
 
@@ -187,11 +285,11 @@ fi
 
 ---
 
-## Step 6: Git Commit (Default)
+## Step 7: Git Commit (Default)
 
 > **Skip only if `no-commit` specified - commit is default behavior**
 
-### 6.1 Identify Modified Repositories
+### 7.1 Identify Modified Repositories
 
 Before committing, identify ALL repositories modified:
 1. Current working directory
@@ -217,7 +315,7 @@ for EXTERNAL_REPO in $EXTERNAL_REPOS_INPUT; do
 done
 ```
 
-### 6.2 Commit Repositories
+### 7.2 Commit Repositories
 
 ```bash
 for REPO in "${REPOS_TO_COMMIT[@]}"; do
@@ -262,5 +360,5 @@ done
 ---
 
 ## References
-- **Branch**: !`git rev-parse --abbrev-ref HEAD`
-- **Status**: !`git status --short`
+- **Branch**: `git rev-parse --abbrev-ref HEAD`
+- **Status**: `git status --short`

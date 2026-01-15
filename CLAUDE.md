@@ -20,9 +20,9 @@ Deployment: [e.g., Vercel, AWS, Docker]
 ```
 
 ### Current Status
-- **Version**: [e.g., 1.0.0]
-- **Stage**: [e.g., Development, Beta, Production]
-- **Last Updated**: [Date]
+- **Version**: 3.3.1
+- **Stage**: Production
+- **Last Updated**: 2026-01-15
 
 ---
 
@@ -43,6 +43,7 @@ Deployment: [e.g., Vercel, AWS, Docker]
 | Execute work | `/02_execute` | Implement with TDD |
 | Review code | `/90_review` | Multi-angle analysis |
 | Update docs | `/91_document` | Auto-sync documentation |
+| Publish | `/999_publish` | Sync templates, bump version, deploy |
 
 ---
 
@@ -68,6 +69,9 @@ project-root/
 │       ├── in_progress/    # Currently executing
 │       ├── done/           # Completed plans
 │       └── active/         # Branch pointers
+├── scripts/                # Sync and build scripts
+│   ├── sync-templates.sh   # Pre-deploy templates sync
+│   └── verify-version-sync.sh  # Version consistency check
 ├── src/ or lib/            # Source code
 ├── tests/                  # Test files
 ├── CLAUDE.md               # This file
@@ -418,5 +422,5 @@ This project uses a hierarchical documentation system:
 
 ---
 
-**Template Version**: claude-pilot 3.3.0
+**Template Version**: claude-pilot 3.3.1
 **Last Updated**: 2026-01-15

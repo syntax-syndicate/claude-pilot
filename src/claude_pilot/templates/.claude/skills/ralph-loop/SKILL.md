@@ -7,8 +7,7 @@ description: Autonomous completion loop that iterates until all quality gates pa
 
 > **Purpose**: Iterate autonomously until all quality gates pass (tests, type-check, lint, coverage)
 > **Target**: Coder Agent after implementing features
-> **Last Updated**: 2026-01-14
-> **References**: @.claude/guides/ralph-loop.md
+> **Last Updated**: 2026-01-15
 
 ---
 
@@ -470,9 +469,9 @@ git-master (Commit working code)
 ## Further Reading
 
 ### Internal Documentation
-- @.claude/guides/ralph-loop.md - Full Ralph Loop guide
-- @.claude/guides/tdd-methodology.md - Red-Green-Refactor cycle
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/ralph-loop/REFERENCE.md - Deep dive on loop mechanics, fix strategies, patterns
+- @.claude/skills/tdd/SKILL.md - Red-Green-Refactor cycle
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/test-environment.md - Test framework detection
 
 ### External Resources

@@ -14,58 +14,256 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 - **SPEC-First**: Requirements, success criteria, test scenarios BEFORE implementation.
 - **Collaborative**: Dialogue with user to clarify ambiguities.
 
-> **⚠️ LANGUAGE - PLAN OUTPUT**: All plan documents MUST be written in English, regardless of conversation language. This includes plan summaries, PRP analysis, success criteria, test scenarios, and all content in the plan file.
+> **⚠️ LANGUAGE - PLAN OUTPUT**: All plan documents MUST be written in English, regardless of conversation language.
 
 > **⚠️ CRITICAL**: DO NOT start implementation during /00_plan.
 > - ❌ NO code editing, test writing, or file creation
 > - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning, Dialogue
-> - Implementation starts ONLY after plan is saved (via `/01_confirm` → `/02_execute` or `/02_execute` directly from pending/)
+> - Implementation starts ONLY after plan is saved (via `/01_confirm` → `/02_execute`)
 
 ---
 
-## Extended Thinking Mode
+## Phase Boundary Protection
 
-> **Conditional**: If LLM model is GLM, proceed with maximum extended thinking throughout all phases.
+### Current Phase: PLANNING
+
+> **YOU ARE IN PLANNING PHASE**
+> - CAN DO: Read, Search, Analyze, Discuss, Plan, Ask questions
+> - CANNOT DO: Edit files, Write files, Create code, Implement
+> - EXIT ONLY VIA: User explicitly runs `/01_confirm` or `/02_execute`
+
+### MANDATORY ACTION: Ambiguous Confirmation Handling
+
+> **🚨 MANDATORY**: At plan completion, you MUST call `AskUserQuestion` before ANY phase transition.
+>
+> **CRITICAL**: Do NOT try to detect specific words or phrases. ANY ambiguous confirmation (e.g., "go ahead", "proceed", "that looks good", "알아서 해", "그래 그렇게 해") MUST trigger the `AskUserQuestion` flow below.
+>
+> **NEVER use Yes/No questions** - always provide explicit multi-option choices.
+
+#### When to Call AskUserQuestion
+
+Call `AskUserQuestion` when:
+1. Plan discussion appears complete
+2. User provides ambiguous confirmation ("go ahead", "proceed", etc.)
+3. User says "that looks good" or similar approval
+4. ANY uncertainty about user intent
+
+#### AskUserQuestion Template (MANDATORY)
+
+```markdown
+AskUserQuestion:
+  What would you like to do next?
+  A) Continue refining the plan
+  B) Explore alternative approaches
+  C) Run /01_confirm (save plan for execution)
+  D) Run /02_execute (start implementation immediately)
+```
+
+Proceed only AFTER user selects explicit option (C or D for execution).
+
+### Valid Execution Triggers
+
+**ONLY these triggers allow phase transition to execution**:
+1. User explicitly types `/01_confirm` or `/02_execute`
+2. User explicitly says "start coding now" or "begin implementation"
+3. User selects option C or D from AskUserQuestion above
+
+**All other responses** → Continue planning or AskUserQuestion to clarify.
+
+---
+
+## Mandatory: Deep Project Understanding
+
+> **⚠️ CRITICAL**: Before answering ANY question, you MUST:
+> 1. Read ALL related files
+> 2. Understand existing patterns
+> 3. Map the architecture
+
+**Reading Checklist**:
+| File/Folder | Purpose |
+|-------------|---------|
+| `CLAUDE.md` | Project overview, conventions |
+| `.claude/commands/*.md` | Existing patterns |
+| `.claude/guides/*.md` | Methodology guides |
+| `.claude/templates/*.md` | PRP, CONTEXT templates |
+| `src/` or `lib/` | Main structure |
+| `tests/` | Test patterns |
+
+**Output Format**:
+```markdown
+🔍 Deep Project Understanding Results
+Project: [Name] | Type: [Python/Node.js/Go/Rust]
+Key Files: [list]
+Existing Patterns: [list]
+```
 
 ---
 
 ## Step 0: Parallel Exploration
 
-| Thread | Focus | Tools |
-|--------|-------|-------|
-| Explore | Related code, patterns | Glob, Grep, Read, find_symbol |
-| Research | External docs | WebSearch, query-docs |
-| Quality | Tests, CLAUDE.md | Read |
+### 🚀 MANDATORY ACTION: Parallel Agent Invocation
 
-Output: 🔍 [Explore] N files at X, [Research] Docs show Y, [Quality] Convention is Z
+> **YOU MUST invoke the following agents NOW using the Task tool.**
+> This is not optional. Execute these Task tool calls immediately.
+
+**EXECUTE IMMEDIATELY - DO NOT SKIP**:
+
+**1. Explorer Agent Task call** (send in same message with Researcher):
+```markdown
+Task:
+  subagent_type: explorer
+  prompt: |
+    Explore the codebase for {FEATURE/COMPONENT}:
+    - Find related files using Glob
+    - Search for patterns using Grep
+    - Read key files to understand architecture
+    - Return structured summary with:
+      * Files found with purposes
+      * Patterns identified
+      * Architecture notes
+```
+
+**2. Researcher Agent Task call** (send in same message with Explorer):
+```markdown
+Task:
+  subagent_type: researcher
+  prompt: |
+    Research {TOPIC/TECHNOLOGY}:
+    - Use query-docs for library-specific documentation
+    - Use WebSearch for best practices
+    - Find code examples and patterns
+    - Return structured summary with:
+      * Sources consulted (with URLs)
+      * Key findings
+      * Code examples
+      * Recommendations
+```
+
+**VERIFICATION**: After sending Task calls, wait for both agents to return results before proceeding.
+
+### Agent Coordination
+
+| Thread | Focus | Tools | Agent |
+|--------|-------|-------|-------|
+| Explore | Related code, patterns | Glob, Grep, Read | **Explorer Agent** |
+| Research | External docs | WebSearch, query-docs | **Researcher Agent** |
+| **Test Env** | **Detect test framework** | **Glob, Read** | **Main (inline)** |
+
+**Test Environment Detection**: See @.claude/guides/test-environment.md
+
+### Main Thread: Test Environment Detection
+
+While agents run in parallel, main thread detects test environment:
+
+```bash
+# Detect test framework
+if [ -f "pyproject.toml" ] || [ -f "pytest.ini" ]; then
+    TEST_FRAMEWORK="pytest"
+    TEST_CMD="pytest"
+    COVERAGE_CMD="pytest --cov"
+elif [ -f "package.json" ]; then
+    TEST_FRAMEWORK="jest"  # or vitest, mocha, etc.
+    TEST_CMD="npm test"
+    COVERAGE_CMD="npm run test:coverage"
+elif [ -f "go.mod" ]; then
+    TEST_FRAMEWORK="go test"
+    TEST_CMD="go test ./..."
+    COVERAGE_CMD="go test -cover ./..."
+fi
+
+# Detect test directory
+TEST_DIR="tests/"
+[ -d "test" ] && TEST_DIR="test/"
+[ -d "__tests__" ] && TEST_DIR="__tests__/"
+```
+
+### Result Merge
+
+After parallel agents complete:
+
+1. **Explorer Summary**: Add to "Explored Files" table
+2. **Researcher Summary**: Add to "Research Findings" table
+3. **Test Environment**: Add to plan as "Test Environment (Detected)" section
+4. **Integration**: Merge findings, identify conflicts, update plan
+
+> **⚠️ COLLECT FOR HANDOFF**: During exploration, collect:
+> - Files read (path + purpose + key lines)
+> - Research findings (source + topic + insight)
+> - Discovered dependencies
+> - Warnings & gotchas
+> - Key decisions made
+> **See**: Step 0.5 for execution context template
+
+---
+
+## Step 0.5: Compile Execution Context
+
+> **Purpose**: Transfer planner's discoveries to executor without re-exploration
+> **Timing**: After Step 0 exploration, BEFORE Step 1 requirements
+
+### Collect from Exploration
+
+As you explore in Step 0, collect information for these tables:
+
+#### Explored Files
+| File | Purpose | Key Lines | Notes |
+|------|---------|-----------|-------|
+| `.claude/commands/00_plan.md` | Plan command template | 1-261 | Current structure |
+| `{file_path}` | {Why read} | {Line range} | {Key insight} |
+
+#### Research Findings
+| Source | Topic | Key Insight | URL |
+|--------|-------|-------------|-----|
+| {Documentation} | {Topic} | {Key takeaway} | {link} |
+
+#### Discovered Dependencies
+| Dependency | Version | Purpose | Status |
+|------------|---------|---------|--------|
+| {package} | {version} | {Why needed} | New/Existing |
+
+#### Warnings & Gotchas
+| Issue | Location | Recommendation |
+|-------|----------|----------------|
+| {Potential problem} | {File/function} | {How to handle} |
+
+#### Key Decisions Made
+| Decision | Rationale | Alternative Considered |
+|----------|-----------|----------------------|
+| {Choice} | {Why this way} | {Other option} |
+
+### Output Format
+
+This becomes the **"Execution Context (Planner Handoff)"** section in the final plan document.
 
 ---
 
 ## Step 1: Requirements Elicitation
 
-Present understanding + AskUserQuestion:
-1. **[Scope]**: Boundaries? 2. **[Constraints]**: Performance/compatibility?
-3. **[Priority]**: Critical vs nice-to-have? 4. **[Out of Scope]**: Explicitly excluded?
+Ask clarifying questions:
+1. **[Scope]**: Boundaries?
+2. **[Constraints]**: Performance/compatibility?
+3. **[Priority]**: Critical vs nice-to-have?
+4. **[Out of Scope]**: Explicitly excluded?
 5. **[Dependencies]**: Blockers/prerequisites?
-
-Validate: restate requirements, get confirmation.
 
 ---
 
 ## Step 2: PRP Definition
 
+**PRP Framework**: See @.claude/guides/prp-framework.md
+
 ### What (Functionality)
 **Objective**: Clear statement | **Scope**: In/out of scope
 
 ### Why (Context)
-**Current**: Problem statement | **Desired**: End state | **Business Value**: User/technical impact
+**Current**: Problem | **Desired**: End state | **Business Value**: Impact
 
 ### How (Approach)
-- **Phase 1**: Discovery & Alignment
-- **Phase 2**: Design
-- **Phase 3**: Implementation (TDD: Red → Green → Refactor, Ralph Loop)
-- **Phase 4**: Verification (type check + lint + tests + coverage)
-- **Phase 5**: Handoff (docs + summary)
+- Phase 1: Discovery & Alignment
+- Phase 2: Design
+- Phase 3: Implementation (TDD: Red → Green → Refactor, Ralph Loop)
+- Phase 4: Verification (type check + lint + tests + coverage)
+- Phase 5: Handoff (docs + summary)
 
 ### Success Criteria
 ```
@@ -75,14 +273,45 @@ SC-{N}: {Description}
 ```
 
 ### Test Scenarios
-| ID | Scenario | Input | Expected | Type |
-|----|----------|-------|----------|------|
-| TS-1 | Happy path | ... | ... | Unit |
-| TS-2 | Edge case | ... | ... | Unit |
-| TS-3 | Error handling | ... | ... | Integration |
+| ID | Scenario | Input | Expected | Type | Test File |
+|----|----------|-------|----------|------|-----------|
+| TS-1 | Happy path | ... | ... | Unit | `tests/test_feature.py::test_xxx` |
+| TS-2 | Edge case | ... | ... | Unit | `tests/test_feature.py::test_yyy` |
 
 ### Constraints
 Time, Technical, Resource limits
+
+---
+
+## Step 2.5: External Service Integration (Conditional)
+
+> **⚠️ Include ONLY when plan involves**: API calls, DB operations, file operations, async, environment variables
+
+**Trigger Keywords**: `API`, `fetch`, `database`, `migration`, `async`, `timeout`, `env`
+
+**See**: @.claude/guides/gap-detection.md for verification checklist
+
+**Plan Sections**:
+```markdown
+## External Service Integration
+### API Calls Required
+| Call | From | To | Endpoint | SDK/HTTP | Status | Verification |
+|------|------|----|----------|----------|--------|--------------|
+| [Description] | [Service] | [Service] | [Path/URL] | [Package/Method] | [New/Existing] | [ ] Check |
+
+### New Endpoints to Create
+| Endpoint | Service | Method | Handler | Request Schema | Response Schema |
+|----------|---------|--------|---------|----------------|-----------------|
+
+### Environment Variables Required
+| Variable | Service | Status | Verification |
+|----------|---------|--------|--------------|
+| [VAR_NAME] | [Service] | [New/Existing] | [ ] In .env.example |
+
+### Error Handling Strategy
+| Operation | Failure Mode | User Notification | Fallback |
+|-----------|--------------|-------------------|----------|
+```
 
 ---
 
@@ -95,16 +324,13 @@ Schema changes, TypeScript interfaces, API shapes
 New files, existing modifications, integration points
 
 ### Vibe Coding Guidelines
-> **LLM-Readable Code Standards** - Enforce during code generation
+**See**: @.claude/skills/vibe-coding/SKILL.md
 
-| Target | Limit | Action |
-|--------|-------|--------|
-| Function | ≤50 lines | Split functions |
-| Class/File | ≤200 lines | Extract modules |
-| Nesting | ≤3 levels | Early return |
-
-**Principles**: SRP, DRY, KISS, Early Return
-**AI Rules**: Small increments, test immediately, never trust blindly, edge cases, consistent naming, no secrets
+| Target | Limit |
+|--------|-------|
+| Function | ≤50 lines |
+| Class/File | ≤200 lines |
+| Nesting | ≤3 levels |
 
 ### Dependencies
 ```
@@ -126,44 +352,52 @@ New files, existing modifications, integration points
 ```markdown
 # {Work Name}
 - Generated: {timestamp} | Work: {work_name}
-- Location: .pilot/plan/pending/{timestamp}_{work_name}.md
 
-## User Requirements [Original request]
-
-## PRP Analysis
-### What / Why / How / Success Criteria / Constraints
-
-## Scope: In scope / Out of scope
-
+## User Requirements
+## PRP Analysis (What/Why/How/Success Criteria/Constraints)
+## Scope
+## Test Environment (Detected)
+## Execution Context (Planner Handoff)
+## External Service Integration [if applicable]
 ## Architecture
-### Data Structures / Module Boundaries / Vibe Coding Guidelines
-
-## Execution Plan [Phases with checkboxes]
-
-## Acceptance Criteria [Checkboxes from SC]
-
-## Test Plan [From Step 2]
-
-## Risks & Mitigations / Open Questions
+## Execution Plan
+## Acceptance Criteria
+## Test Plan
+## Risks & Mitigations
+## Open Questions
 ```
 
 ### User Confirmation Gate
-> **⛔ CONFIRMATION REQUIRED**
-> Status: ✅ Plan complete (conversation only), ✅ No files created, ✅ Ready for review
-> - IF correct → Run `/01_confirm` to save to `pending/`
-> - IF changes → Request modifications
-> To execute: `/01_confirm` then `/02_execute`, OR `/02_execute` directly if plan in `pending/`
+> **⛔ CONFIRMATION REQUIRED - MANDATORY AskUserQuestion CALL**
+>
+> **Status**: ✅ Plan complete (conversation only), ✅ No files created
+>
+> **🚨 MANDATORY ACTION**: Before concluding, you MUST call `AskUserQuestion`:
+>
+> ```markdown
+> AskUserQuestion:
+>   What would you like to do next?
+>   A) Continue refining the plan
+>   B) Explore alternative approaches
+>   C) Run /01_confirm (save plan for execution)
+>   D) Run /02_execute (start implementation immediately)
+> ```
+>
+> **Proceed only after user selects option C or D.**
+>
+> - IF user selects A or B → Continue planning dialogue
+> - IF user selects C → Instruct to run `/01_confirm` to save
+> - IF user selects D → Instruct to run `/02_execute` directly
+> - IF user provides ambiguous response → Re-call `AskUserQuestion` with same options
 
 ---
 
 ## Success Criteria
 
 - [ ] Parallel exploration executed
-- [ ] Clarifying questions asked/answered
 - [ ] Requirements in PRP format
-- [ ] Test scenarios TDD-ready
-- [ ] Plan follows structure, all phases defined
-- [ ] Risks documented, plan in conversation (no file)
+- [ ] Test scenarios defined
+- [ ] Architecture documented
 - [ ] User approved, ready for `/01_confirm`
 
 ---
@@ -171,8 +405,7 @@ New files, existing modifications, integration points
 ## Workflow
 ```
 /00_plan → /01_confirm → /02_execute → /03_close
- Create    Review      Execute      Archive
- Plan      Plan      (TDD+Ralph)   & Commit
+Create    Review      Execute      Archive
 ```
 
 ---
@@ -183,7 +416,14 @@ New files, existing modifications, integration points
 
 ---
 
+## Related Guides
+- @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition
+- @.claude/guides/test-environment.md - Test framework detection
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
+- @.claude/guides/gap-detection.md - External service verification
+
+---
+
 ## References
 - [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
-- **Branch**: !`git rev-parse --abbrev-ref HEAD`
-- **Status**: !`git status --short`
+- **Branch**: `git rev-parse --abbrev-ref HEAD`
