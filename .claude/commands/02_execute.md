@@ -161,11 +161,75 @@ Task:
 
 **Error Recovery**: If agent returns error, use `AskUserQuestion` with options: "Retry", "Continue manually", "Cancel"
 
+### 3.4 Verify Coder Output (TDD Enforcement)
+
+> **🚨 CRITICAL - MANDATORY Verification**
+> When `<CODER_COMPLETE>` received, verify these fields exist in agent output:
+> - [ ] "Test files created" or "Tests written"
+> - [ ] "Test run output" with PASS/FAIL counts
+> - [ ] "Coverage" percentage (must be ≥80%)
+> - [ ] "Ralph Loop iterations" count
+
+**Verification Process**:
+
+1. **Check for Test Evidence**: Look for test creation and execution in the agent summary
+2. **Verify Test Results**: Confirm PASS/FAIL counts are present
+3. **Check Coverage**: Coverage percentage ≥80% (overall), ≥90% (core modules)
+4. **Verify Ralph Loop**: Confirm iteration count and final status
+
+**If Verification Fails** (missing required fields):
+
+```
+IF any mandatory field missing:
+    1. Log: "⚠️ TDD verification failed: missing {field}"
+    2. Re-invoke Coder Agent with explicit instruction:
+       "Your output MUST include: Test Files, Test Results, Coverage, Ralph Loop"
+    3. IF fails 3 times:
+       Use AskUserQuestion for guidance:
+       - "Accept completion without full TDD evidence?"
+       - "Continue manually?"
+       - "Cancel and investigate?"
+```
+
+**Example Valid Output**:
+```markdown
+## Coder Summary
+
+### Test Files Created
+- src/auth/login.test.ts
+- src/auth/logout.test.ts
+
+### Test Results
+PASS: 12, FAIL: 0, SKIP: 0
+
+### Coverage
+Overall: 85%, Core: 92%
+
+### Ralph Loop
+Iterations: 3, Status: <RALPH_COMPLETE>
+```
+
+**Example INVALID Output** (missing test evidence):
+```markdown
+## Coder Summary
+Implementation complete. All SCs met.
+❌ MISSING: Test files, Test results, Coverage, Ralph Loop
+```
+
 ---
 
-## Step 4: Execute with TDD (Legacy - Use Agent Instead)
+## Step 4: Execute with TDD (DEPRECATED - Use Agent Instead)
 
-> **NOTE**: This step is preserved for backward compatibility. For new plans, use **Step 3: Delegate to Coder Agent** instead.
+> **⚠️ DEPRECATED - Legacy Step**
+> **This step is preserved for backward compatibility only.**
+>
+> **New Approach**: Use **Step 3: Delegate to Coder Agent** instead, which includes:
+> - TDD Red-Green-Refactor cycle
+> - Ralph Loop autonomous completion
+> - Context isolation for 8x token efficiency
+> - Mandatory TDD verification
+>
+> **Migration Path**: If you're using this legacy step, migrate to Step 3 (Coder Agent delegation).
 
 **Full TDD methodology**: See @.claude/skills/tdd/SKILL.md
 

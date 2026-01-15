@@ -117,7 +117,16 @@ if [ $ITERATION -gt $MAX_ITERATIONS ]; then
 fi
 ```
 
-## Output Format
+## Output Format (MANDATORY)
+
+> **🚨 CRITICAL - Required Output Format**
+> Your summary MUST include these sections. Missing sections = invalid completion.
+>
+> **MANDATORY Fields** (all required for <CODER_COMPLETE>):
+> - [ ] **Test Files**: List of test files created/modified
+> - [ ] **Test Results**: PASS/FAIL counts from test run
+> - [ ] **Coverage**: Percentage (must be ≥80% overall, ≥90% core)
+> - [ ] **Ralph Loop**: Iteration count and final status
 
 Return findings in this format:
 ```markdown
@@ -130,15 +139,27 @@ Return findings in this format:
   - `src/auth/logout.ts`: Added session cleanup
   - `tests/auth.test.ts`: Added 5 tests
 
+### Test Files (MANDATORY)
+- `tests/auth.test.ts`: Created with 5 tests
+- `tests/auth/login.test.ts`: Created with 3 tests
+- `tests/auth/logout.test.ts`: Created with 2 tests
+
+### Test Results (MANDATORY)
+- PASS: 15
+- FAIL: 0
+- SKIP: 0
+
+### Coverage (MANDATORY)
+- Overall: 85% (target: 80%)
+- Core Modules: 92% (target: 90%)
+
+### Ralph Loop (MANDATORY)
+- Total Iterations: 3
+- Final Status: <CODER_COMPLETE>
+
 ### Verification Results
-- Tests: ✅ All pass (15/15)
 - Type Check: ✅ Clean
 - Lint: ✅ No issues
-- Coverage: ✅ 85% (80% target met)
-
-### Ralph Loop Iterations
-- Total: 3 iterations
-- Final Status: <CODER_COMPLETE>
 
 ### Follow-ups
 - None
@@ -154,6 +175,22 @@ Or if blocked:
 - Current Coverage: 72%
 - Missing: Edge case tests for error paths
 
+### Test Files (MANDATORY)
+- `tests/auth.test.ts`: Created with 5 tests
+
+### Test Results (MANDATORY)
+- PASS: 10
+- FAIL: 0
+- SKIP: 0
+
+### Coverage (MANDATORY)
+- Overall: 72% (target: 80%) ❌
+- Core Modules: 85% (target: 90%) ❌
+
+### Ralph Loop (MANDATORY)
+- Total Iterations: 7 (max reached)
+- Final Status: <CODER_BLOCKED>
+
 ### Attempted Fixes
 - Iteration 1: Fixed test failures (3 → 0)
 - Iteration 2: Fixed type errors (2 → 0)
@@ -164,6 +201,37 @@ Or if blocked:
 - User intervention needed for edge cases
 - Consider lowering threshold or documenting exceptions
 ```
+
+### Example INVALID Output (Missing Required Fields)
+
+❌ **DO NOT output summaries like this - they will be rejected:**
+
+```markdown
+## Coder Agent Summary
+
+### Implementation Complete ✅
+- All SCs met
+- Files changed: src/auth/login.ts, src/auth/logout.ts
+
+❌ MISSING MANDATORY FIELDS:
+- Test Files: NOT LISTED
+- Test Results: NOT PROVIDED
+- Coverage: NOT PROVIDED
+- Ralph Loop: NOT PROVIDED
+
+This output is INVALID and will trigger re-invocation.
+```
+
+### Output Validation Checklist
+
+Before returning `<CODER_COMPLETE>`, verify:
+- [ ] Test Files section lists all test files created/modified
+- [ ] Test Results section includes PASS/FAIL/SKIP counts
+- [ ] Coverage section shows percentages (overall + core)
+- [ ] Ralph Loop section shows iteration count and status
+- [ ] All MANDATORY fields are present and populated
+
+**Missing any field = Re-invocation with explicit instruction**
 
 ## Micro-Cycle Compliance (CRITICAL)
 
