@@ -511,3 +511,209 @@ class TestApplyStatusline:
             settings = json.load(f)
 
         assert "statusLine" in settings
+
+
+class TestApplyHooks:
+    """Test apply_hooks() function."""
+
+    def test_apply_hooks_skips_missing_settings(self, tmp_path: Path) -> None:
+        """Test apply_hooks() skips gracefully if settings.json doesn't exist."""
+        from claude_pilot.updater import apply_hooks
+
+        # Don't create .claude directory
+        result = apply_hooks(tmp_path)
+        assert result is True  # Should succeed (skip is OK)
+
+    def test_apply_hooks_adds_default_hooks_when_missing(self, tmp_path: Path) -> None:
+        """Test apply_hooks() adds default hooks if none exist."""
+        from claude_pilot.updater import apply_hooks
+
+        # Create .claude directory with settings.json but no hooks
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+
+        settings_path = claude_dir / "settings.json"
+        import json
+        with settings_path.open("w") as f:
+            json.dump({"language": "en"}, f)
+
+        result = apply_hooks(tmp_path)
+        assert result is True
+
+        # Check hooks were added
+        with settings_path.open("r") as f:
+            settings = json.load(f)
+
+        assert "hooks" in settings
+        assert "PreToolUse" in settings["hooks"]
+        assert "PostToolUse" in settings["hooks"]
+        assert "Stop" in settings["hooks"]
+
+    def test_apply_hooks_updates_relative_paths(self, tmp_path: Path) -> None:
+        """Test apply_hooks() updates relative paths to $CLAUDE_PROJECT_DIR."""
+        from claude_pilot.updater import apply_hooks
+
+        # Create .claude directory with old-style hooks
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+
+        settings_path = claude_dir / "settings.json"
+        old_hooks = {
+            "PreToolUse": [
+                {
+                    "matcher": "Edit|Write",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": ".claude/scripts/hooks/typecheck.sh"
+                        }
+                    ]
+                }
+            ]
+        }
+        import json
+        with settings_path.open("w") as f:
+            json.dump({"hooks": old_hooks}, f)
+
+        result = apply_hooks(tmp_path)
+        assert result is True
+
+        # Check paths were updated
+        with settings_path.open("r") as f:
+            settings = json.load(f)
+
+        updated_cmd = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        assert "$CLAUDE_PROJECT_DIR" in updated_cmd
+        assert "typecheck.sh" in updated_cmd
+
+    def test_apply_hooks_preserves_already_updated_paths(self, tmp_path: Path) -> None:
+        """Test apply_hooks() preserves paths that already use $CLAUDE_PROJECT_DIR."""
+        from claude_pilot.updater import apply_hooks
+
+        # Create .claude directory with new-style hooks
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+
+        settings_path = claude_dir / "settings.json"
+        new_hooks = {
+            "PreToolUse": [
+                {
+                    "matcher": "Edit|Write",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/typecheck.sh'
+                        }
+                    ]
+                }
+            ]
+        }
+        import json
+        with settings_path.open("w") as f:
+            json.dump({"hooks": new_hooks}, f)
+
+        result = apply_hooks(tmp_path)
+        assert result is True
+
+        # Check paths were not modified
+        with settings_path.open("r") as f:
+            settings = json.load(f)
+
+        updated_cmd = settings["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        assert updated_cmd == '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/typecheck.sh'
+
+    def test_apply_hooks_preserves_custom_hooks(self, tmp_path: Path) -> None:
+        """Test apply_hooks() preserves user's custom hooks."""
+        from claude_pilot.updater import apply_hooks
+
+        # Create .claude directory with custom hooks
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+
+        settings_path = claude_dir / "settings.json"
+        custom_hooks = {
+            "PreToolUse": [
+                {
+                    "matcher": "Edit|Write",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": ".claude/scripts/hooks/typecheck.sh"
+                        }
+                    ]
+                },
+                {
+                    "matcher": "Bash",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": "/custom/path/my-hook.sh"  # User's custom hook
+                        }
+                    ]
+                }
+            ]
+        }
+        import json
+        with settings_path.open("w") as f:
+            json.dump({"hooks": custom_hooks}, f)
+
+        result = apply_hooks(tmp_path)
+        assert result is True
+
+        # Check custom hook was preserved
+        with settings_path.open("r") as f:
+            settings = json.load(f)
+
+        # Find the custom hook
+        bash_hooks = [m for m in settings["hooks"]["PreToolUse"] if m.get("matcher") == "Bash"]
+        assert len(bash_hooks) == 1
+        custom_cmd = bash_hooks[0]["hooks"][0]["command"]
+        assert custom_cmd == "/custom/path/my-hook.sh"  # Preserved unchanged
+
+    def test_apply_hooks_creates_backup(self, tmp_path: Path) -> None:
+        """Test apply_hooks() creates backup before modifying."""
+        from claude_pilot.updater import apply_hooks
+
+        # Create .claude directory with old-style hooks
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+
+        settings_path = claude_dir / "settings.json"
+        old_hooks = {
+            "PreToolUse": [
+                {
+                    "matcher": "Edit|Write",
+                    "hooks": [
+                        {
+                            "type": "command",
+                            "command": ".claude/scripts/hooks/typecheck.sh"
+                        }
+                    ]
+                }
+            ]
+        }
+        import json
+        with settings_path.open("w") as f:
+            json.dump({"hooks": old_hooks}, f)
+
+        result = apply_hooks(tmp_path)
+        assert result is True
+
+        # Check backup was created
+        backups = list(claude_dir.glob("settings.json.backup.*"))
+        assert len(backups) >= 1, "Should create a backup"
+
+    def test_apply_hooks_handles_invalid_json(self, tmp_path: Path) -> None:
+        """Test apply_hooks() handles invalid JSON gracefully."""
+        from claude_pilot.updater import apply_hooks
+
+        # Create .claude directory with invalid JSON
+        claude_dir = tmp_path / ".claude"
+        claude_dir.mkdir(parents=True, exist_ok=True)
+
+        settings_path = claude_dir / "settings.json"
+        with settings_path.open("w") as f:
+            f.write("invalid json {{{")
+
+        result = apply_hooks(tmp_path)
+        assert result is False, "Should return False for invalid JSON"

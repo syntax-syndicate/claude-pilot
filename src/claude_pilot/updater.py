@@ -307,6 +307,11 @@ def perform_auto_update(target_dir: Path) -> UpdateStatus:
     if fail_count > 0:
         click.secho(f"! Failed: {fail_count} files", fg="yellow")
 
+    # Apply settings.json updates (merge pattern - preserves user settings)
+    click.secho("i Applying settings.json updates...", fg="blue")
+    apply_hooks(target_dir)
+    apply_statusline(target_dir)
+
     # Ensure .gitignore excludes .pilot/
     ensure_gitignore(target_dir)
 
@@ -577,6 +582,173 @@ def apply_statusline(target_dir: Path | None = None) -> bool:
         "type": "command",
         "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/statusline.sh'
     }
+    return _write_settings_atomically(settings, settings_path, backup_path)
+
+
+# Default hooks configuration with $CLAUDE_PROJECT_DIR paths
+DEFAULT_HOOKS: dict[str, Any] = {
+    "PreToolUse": [
+        {
+            "matcher": "Edit|Write",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/typecheck.sh'
+                },
+                {
+                    "type": "command",
+                    "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/lint.sh'
+                }
+            ]
+        },
+        {
+            "matcher": "Bash",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/branch-guard.sh'
+                }
+            ]
+        }
+    ],
+    "PostToolUse": [
+        {
+            "matcher": "Edit|Write",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/typecheck.sh'
+                }
+            ]
+        }
+    ],
+    "Stop": [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/check-todos.sh'
+                }
+            ]
+        }
+    ]
+}
+
+
+def _is_hook_path_updated(command: str) -> bool:
+    """Check if hook command path uses $CLAUDE_PROJECT_DIR pattern."""
+    return "$CLAUDE_PROJECT_DIR" in command
+
+
+def _update_hook_path(command: str) -> str:
+    """
+    Update hook command path to use $CLAUDE_PROJECT_DIR pattern.
+
+    Converts relative paths like '.claude/scripts/hooks/typecheck.sh'
+    to '"$CLAUDE_PROJECT_DIR"/.claude/scripts/hooks/typecheck.sh'.
+    """
+    if _is_hook_path_updated(command):
+        return command
+
+    # Handle relative paths starting with .claude/
+    if command.startswith(".claude/"):
+        return f'"$CLAUDE_PROJECT_DIR"/{command}'
+
+    # Handle paths that might have quotes or other formats
+    if "/.claude/" in command:
+        return command  # Already has a path prefix
+
+    return command
+
+
+def _update_hooks_in_settings(hooks: dict[str, Any]) -> tuple[dict[str, Any], int]:
+    """
+    Update all hook command paths in hooks configuration.
+
+    Args:
+        hooks: The hooks configuration dict.
+
+    Returns:
+        Tuple of (updated_hooks, update_count).
+    """
+    updated_hooks = {}
+    update_count = 0
+
+    for event_name, matchers in hooks.items():
+        updated_matchers = []
+        for matcher in matchers:
+            updated_matcher = matcher.copy()
+            if "hooks" in matcher:
+                updated_hook_list = []
+                for hook in matcher["hooks"]:
+                    updated_hook = hook.copy()
+                    if "command" in hook:
+                        old_cmd = hook["command"]
+                        new_cmd = _update_hook_path(old_cmd)
+                        if old_cmd != new_cmd:
+                            update_count += 1
+                        updated_hook["command"] = new_cmd
+                    updated_hook_list.append(updated_hook)
+                updated_matcher["hooks"] = updated_hook_list
+            updated_matchers.append(updated_matcher)
+        updated_hooks[event_name] = updated_matchers
+
+    return updated_hooks, update_count
+
+
+def apply_hooks(target_dir: Path | None = None) -> bool:
+    """
+    Apply hooks configuration to existing settings.json.
+
+    This function updates hook command paths to use $CLAUDE_PROJECT_DIR
+    pattern for better reliability. If hooks section doesn't exist,
+    it adds the default hooks configuration.
+
+    User customizations (additional hooks, matchers) are preserved.
+    Only the command paths are updated to the new pattern.
+
+    Args:
+        target_dir: Optional target directory. Defaults to current working directory.
+
+    Returns:
+        True if hooks were updated or already current, False on error.
+    """
+    if target_dir is None:
+        target_dir = config.get_target_dir()
+
+    settings_path = target_dir / ".claude" / "settings.json"
+
+    # Skip if settings.json doesn't exist (will be created by init)
+    if not settings_path.exists():
+        click.secho("i settings.json not found, skipping hooks update", fg="blue")
+        return True
+
+    # Read existing settings
+    try:
+        with settings_path.open("r") as f:
+            settings = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        click.secho(f"! Error reading settings.json: {e}", fg="yellow")
+        return False
+
+    # If no hooks section, add default hooks
+    if "hooks" not in settings:
+        click.secho("i Adding default hooks configuration", fg="blue")
+        backup_path = _create_settings_backup(settings_path, target_dir)
+        settings["hooks"] = DEFAULT_HOOKS
+        return _write_settings_atomically(settings, settings_path, backup_path)
+
+    # Update existing hooks paths
+    updated_hooks, update_count = _update_hooks_in_settings(settings["hooks"])
+
+    if update_count == 0:
+        click.secho("i Hooks already use $CLAUDE_PROJECT_DIR paths", fg="blue")
+        return True
+
+    # Create backup and write updated settings
+    click.secho(f"i Updating {update_count} hook path(s) to $CLAUDE_PROJECT_DIR pattern", fg="blue")
+    backup_path = _create_settings_backup(settings_path, target_dir)
+    settings["hooks"] = updated_hooks
     return _write_settings_atomically(settings, settings_path, backup_path)
 
 
