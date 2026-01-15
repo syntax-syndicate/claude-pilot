@@ -30,6 +30,8 @@ This command can be invoked directly OR via the plan-reviewer agent:
 
 ### Via Plan-Reviewer Agent (Recommended for Complex Plans)
 
+**Full parallel patterns**: See @.claude/guides/parallel-execution.md - Pattern 4: Parallel Review
+
 ### 🚀 MANDATORY ACTION: Plan-Reviewer Agent Invocation
 
 > **YOU MUST invoke the plan-reviewer agent NOW using the Task tool.**
@@ -57,58 +59,9 @@ Task:
     - Overall assessment
 ```
 
-**VERIFICATION**: After sending Task call, wait for plan-reviewer agent to return results before proceeding to Step 1.
+**For complex plans**: Use parallel multi-angle review (see guide for Security/Quality/Architecture Task templates).
 
-### Parallel Multi-Angle Review (For Complex Plans)
-
-### 🚀 MANDATORY ACTION: Parallel Plan-Reviewer Agent Invocation
-
-> **For large or complex plans, YOU MUST invoke multiple plan-reviewer agents NOW using the Task tool.**
-> This is not optional. Execute these Task tool calls immediately in the same message.
-
-**EXECUTE IMMEDIATELY - DO NOT SKIP**:
-
-```markdown
-# Parallel review angles (optional, for very complex plans)
-Task:
-  subagent_type: plan-reviewer
-  prompt: |
-    Review plan from SECURITY angle:
-    - External API security considerations
-    - Input validation
-    - Authentication/authorization
-    - Secret management
-    Plan Path: {PLAN_PATH}
-
-Task:
-  subagent_type: plan-reviewer
-  prompt: |
-    Review plan from QUALITY angle:
-    - Vibe Coding compliance
-    - Code quality standards
-    - Testing coverage
-    - Documentation completeness
-    Plan Path: {PLAN_PATH}
-
-Task:
-  subagent_type: plan-reviewer
-  prompt: |
-    Review plan from ARCHITECTURE angle:
-    - System design
-    - Component relationships
-    - Scalability considerations
-    - Integration points
-    Plan Path: {PLAN_PATH}
-```
-
-**VERIFICATION**: After sending Task calls, wait for all plan-reviewer agents to return results before proceeding.
-
-> **Todo Management for Parallel Review**: When invoking multiple plan-reviewer agents in parallel:
-> - Mark all review todos as `in_progress` simultaneously
-> - Use [Parallel Group N] prefix to indicate parallel execution
-> - Complete all review todos together when ALL agents return
-
-**Note**: Parallel review is resource-intensive. Use only for complex, high-stakes plans where deep analysis from multiple angles is justified.
+**VERIFICATION**: After sending Task call(s), wait for plan-reviewer agent(s) to return results before proceeding to Step 1.
 
 ---
 
@@ -143,50 +96,23 @@ Read and extract: User requirements, Execution plan, Acceptance criteria, Test s
 
 ## Step 2: Type Detection
 
-| Type | Keywords | Extended Reviews | Test File Requirement |
-|------|----------|------------------|----------------------|
-| **Code** | function, component, API, bug fix, src/, lib/ | A, B, D | **Required** |
-| **Config** | .claude/, settings, rules, template, workflow, documentation | C | **Optional** (N/A allowed) |
-| **Documentation** | CLAUDE.md, README, guide, docs/, CONTEXT.md | C | **Optional** (N/A allowed) |
-| **Scenario** | test, validation, edge cases | H | **Required** |
-| **Infra** | Vercel, env, deploy, CI/CD | F | **Required** |
-| **DB** | migration, table, schema | E | **Required** |
-| **AI** | LLM, prompts, AI | G | **Required** |
+**Full activation matrix**: See @.claude/guides/review-checklist.md - Extended Reviews
 
-### Plan Type Auto-Detection
+| Type | Keywords | Test File Requirement |
+|------|----------|----------------------|
+| **Code** | function, component, API, bug fix, src/, lib/ | **Required** |
+| **Config** | .claude/, settings, rules, template, workflow | **Optional** (N/A allowed) |
+| **Documentation** | CLAUDE.md, README, guide, docs/, CONTEXT.md | **Optional** (N/A allowed) |
+| **Scenario** | test, validation, edge cases | **Required** |
+| **Infra** | Vercel, env, deploy, CI/CD | **Required** |
+| **DB** | migration, table, schema | **Required** |
+| **AI** | LLM, prompts, AI | **Required** |
 
 **Test File Conditional Logic**:
+- **Code/Scenario/Infra/DB/AI**: Test file path required (BLOCKING if missing)
+- **Config/Documentation**: `N/A` or `Manual` acceptable
 
-```bash
-# Detect if plan is Config/Documentation type
-SCOPE_CONTENT=$(grep "## Scope" "$PLAN_PATH" 2>/dev/null || echo "")
-SCOPE_IN_SCOPE=$(grep "## Scope" "$PLAN_PATH" -A 20 2>/dev/null || echo "")
-
-# Check for Config/Documentation patterns
-if echo "$SCOPE_CONTENT" | grep -q "\.claude/\|settings\|rules/\|workflow\|template"; then
-    PLAN_TYPE="Config"
-    TEST_FILE_REQUIRED="Optional"
-elif echo "$SCOPE_CONTENT" | grep -qi "CLAUDE\.md\|README\|documentation\|guide\|CONTEXT\.md"; then
-    PLAN_TYPE="Documentation"
-    TEST_FILE_REQUIRED="Optional"
-elif echo "$SCOPE_IN_SCOPE" | grep -q "src/\|lib/\|component\|function\|API"; then
-    PLAN_TYPE="Code"
-    TEST_FILE_REQUIRED="Required"
-else
-    PLAN_TYPE="Code"
-    TEST_FILE_REQUIRED="Required"
-fi
-```
-
-**Conditional Test File Validation**:
-
-| Plan Type | Test File Column Value | Acceptable Values |
-|-----------|------------------------|-------------------|
-| **Code** | Required | `tests/test_xxx.py`, `__tests__/xxx.test.ts`, etc. |
-| **Config** | Optional | `N/A`, `Manual`, or actual test file |
-| **Documentation** | Optional | `N/A`, `Manual`, or actual test file |
-
-**Config/Documentation Plans**: When scope only includes `.claude/`, `CLAUDE.md`, `README`, `CONTEXT.md`, or documentation files, the Test File column may contain `N/A` or `Manual` without triggering a BLOCKING finding.
+**Auto-detection**: See @.claude/guides/review-checklist.md for bash implementation
 
 ---
 
@@ -273,28 +199,17 @@ Execute all 8 reviews for every plan:
 
 **Trigger**: Run for ALL plans
 
-| Check | Question | Code Plans | Config/Doc Plans |
-|-------|----------|------------|------------------|
-| Scenarios Defined | Are there concrete test scenarios? | Required | Required |
-| Test Files Specified | Does each scenario include file path? | Required | **Optional** (N/A allowed) |
-| Test Command Detected | Is test command specified? | Required | Optional |
-| Coverage Command | Is coverage command included? | Required | Optional |
-| Test Environment | Does plan include "Test Environment (Detected)"? | Required | Optional |
+| Check | Code Plans | Config/Doc Plans |
+|-------|------------|------------------|
+| Scenarios Defined | Required | Required |
+| Test Files Specified | Required | **Optional** (N/A allowed) |
+| Test Command Detected | Required | Optional |
+| Coverage Command | Required | Optional |
+| Test Environment | Required | Optional |
 
-**BLOCKING Conditions** (Code Plans):
-- Test Plan section missing
-- No test scenarios defined
-- Test scenarios lack "Test File" column with valid path
-- Test command not specified
-- Coverage command not specified
-
-**BLOCKING Conditions** (Config/Documentation Plans):
-- Test Plan section missing
-- No test scenarios defined
-
-**Note**: For Config/Documentation plans, "Test File" column may contain `N/A` or `Manual` without triggering BLOCKING. Test command and coverage command are optional but recommended if applicable.
-
-**Plan Type Detection**: See Step 2: Type Detection for auto-detection logic.
+**BLOCKING** (Code): Test Plan missing, no scenarios, no test file paths, no test/coverage commands
+**BLOCKING** (Config/Doc): Test Plan missing, no scenarios
+**Plan Type Detection**: See Step 2
 
 ---
 
@@ -307,21 +222,11 @@ Execute all 8 reviews for every plan:
 - **Assessment**: [Pass/Needs Revision/BLOCKED]
 - **Findings**: BLOCKING: N / Critical: N / Warning: N / Suggestion: N
 
-## Mandatory Review (8 items)
-| # | Item | Status |
-|---|------|--------|
-| 1 | Dev Principles | ✅/⚠️/❌ |
-| 2-8 | ... | ... |
-
-## Gap Detection Review (MANDATORY)
-| # | Category | Status |
-|---|----------|--------|
-| 9.1 | External API | ✅/🛑 |
-| 9.2-9.7 | ... | ... |
-
-## Vibe Coding Compliance
-| Target | Status |
-|--------|--------|
+## Mandatory Review (8 items), Gap Detection (9.1-9.7), Vibe Coding Compliance
+| Section | Status |
+|---------|--------|
+| Dev Principles | ✅/⚠️/❌ |
+| External API | ✅/🛑 |
 | Functions ≤50 lines | ✅/⚠️/❌ |
 ```
 
@@ -331,8 +236,6 @@ Execute all 8 reviews for every plan:
 
 > **Principle**: Review completion = Plan file improved with findings applied
 
-### 9.1 Map Findings to Sections
-
 | Issue Type | Target Section | Method |
 |------------|----------------|--------|
 | Missing step | Execution Plan | Add checkbox |
@@ -340,18 +243,7 @@ Execute all 8 reviews for every plan:
 | Test gap | Test Plan | Add scenario |
 | Risk identified | Risks | Add item |
 
-### 9.2 Apply & Update History
-
-1. Read plan file
-2. For each finding: Identify target section, Apply modification
-3. Write updated plan
-
-**Append to Review History**:
-```markdown
-## Review History
-### Review #N (YYYY-MM-DD)
-**Findings Applied**: BLOCKING: N, Critical: N, Warning: N, Suggestion: N
-```
+**Apply & Update History**: Read plan → Apply modifications → Write plan → Append to Review History (findings counts)
 
 ---
 

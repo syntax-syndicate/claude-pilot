@@ -17,9 +17,8 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 > **⚠️ LANGUAGE - PLAN OUTPUT**: All plan documents MUST be written in English, regardless of conversation language.
 
 > **⚠️ CRITICAL**: DO NOT start implementation during /00_plan.
-> - ❌ NO code editing, test writing, or file creation
-> - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning, Dialogue
-> - Implementation starts ONLY after plan is saved (via `/01_confirm` → `/02_execute`)
+> - ❌ NO: Code editing, test writing, file creation
+> - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning. Implementation starts ONLY after `/01_confirm` → `/02_execute`
 
 ---
 
@@ -42,11 +41,7 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 
 #### When to Call AskUserQuestion
 
-Call `AskUserQuestion` when:
-1. Plan discussion appears complete
-2. User provides ambiguous confirmation ("go ahead", "proceed", etc.)
-3. User says "that looks good" or similar approval
-4. ANY uncertainty about user intent
+Call `AskUserQuestion` when plan discussion appears complete, user provides ambiguous confirmation ("go ahead", "proceed", "알아서 해"), OR ANY uncertainty about intent.
 
 #### AskUserQuestion Template (MANDATORY)
 
@@ -101,50 +96,17 @@ Existing Patterns: [list]
 
 ## Step 0: Parallel Exploration
 
+**Full details**: See @.claude/guides/parallel-execution.md - Pattern 1: Parallel Exploration
+
 ### 🚀 MANDATORY ACTION: Parallel Agent Invocation
 
 > **YOU MUST invoke the following agents NOW using the Task tool.**
 > This is not optional. Execute these Task tool calls immediately.
 
-**EXECUTE IMMEDIATELY - DO NOT SKIP**:
-
-**1. Explorer Agent Task call** (send in same message with Researcher):
-```markdown
-Task:
-  subagent_type: explorer
-  prompt: |
-    Explore the codebase for {FEATURE/COMPONENT}:
-    - Find related files using Glob
-    - Search for patterns using Grep
-    - Read key files to understand architecture
-    - Return structured summary with:
-      * Files found with purposes
-      * Patterns identified
-      * Architecture notes
-```
-
-**2. Researcher Agent Task call** (send in same message with Explorer):
-```markdown
-Task:
-  subagent_type: researcher
-  prompt: |
-    Research {TOPIC/TECHNOLOGY}:
-    - Use query-docs for library-specific documentation
-    - Use WebSearch for best practices
-    - Find code examples and patterns
-    - Return structured summary with:
-      * Sources consulted (with URLs)
-      * Key findings
-      * Code examples
-      * Recommendations
-```
-
-**VERIFICATION**: After sending Task calls, wait for both agents to return results before proceeding.
-
-> **Todo Management for Parallel Exploration**: When invoking Explorer and Researcher agents in parallel:
-> - Mark both exploration todos as `in_progress` simultaneously
-> - Use [Parallel Group 1] prefix to indicate parallel execution
-> - Complete both todos together when BOTH agents return
+**Execute in parallel** (see guide for full Task call templates):
+1. **Explorer Agent**: Explore codebase for related files, patterns, architecture
+2. **Researcher Agent**: Research external docs, best practices, code examples
+3. **Main Thread**: Detect test environment (see @.claude/guides/test-environment.md)
 
 ### Agent Coordination
 
@@ -154,38 +116,9 @@ Task:
 | Research | External docs | WebSearch, query-docs | **Researcher Agent** |
 | **Test Env** | **Detect test framework** | **Glob, Read** | **Main (inline)** |
 
-**Test Environment Detection**: See @.claude/guides/test-environment.md
-
-### Main Thread: Test Environment Detection
-
-While agents run in parallel, main thread detects test environment:
-
-```bash
-# Detect test framework
-if [ -f "pyproject.toml" ] || [ -f "pytest.ini" ]; then
-    TEST_FRAMEWORK="pytest"
-    TEST_CMD="pytest"
-    COVERAGE_CMD="pytest --cov"
-elif [ -f "package.json" ]; then
-    TEST_FRAMEWORK="jest"  # or vitest, mocha, etc.
-    TEST_CMD="npm test"
-    COVERAGE_CMD="npm run test:coverage"
-elif [ -f "go.mod" ]; then
-    TEST_FRAMEWORK="go test"
-    TEST_CMD="go test ./..."
-    COVERAGE_CMD="go test -cover ./..."
-fi
-
-# Detect test directory
-TEST_DIR="tests/"
-[ -d "test" ] && TEST_DIR="test/"
-[ -d "__tests__" ] && TEST_DIR="__tests__/"
-```
-
 ### Result Merge
 
 After parallel agents complete:
-
 1. **Explorer Summary**: Add to "Explored Files" table
 2. **Researcher Summary**: Add to "Research Findings" table
 3. **Test Environment**: Add to plan as "Test Environment (Detected)" section
@@ -204,41 +137,18 @@ After parallel agents complete:
 ## Step 0.5: Compile Execution Context
 
 > **Purpose**: Transfer planner's discoveries to executor without re-exploration
-> **Timing**: After Step 0 exploration, BEFORE Step 1 requirements
 
-### Collect from Exploration
+### Collect for Handoff
 
-As you explore in Step 0, collect information for these tables:
+Collect these tables during exploration (becomes "Execution Context (Planner Handoff)" section):
 
-#### Explored Files
-| File | Purpose | Key Lines | Notes |
-|------|---------|-----------|-------|
-| `.claude/commands/00_plan.md` | Plan command template | 1-261 | Current structure |
-| `{file_path}` | {Why read} | {Line range} | {Key insight} |
-
-#### Research Findings
-| Source | Topic | Key Insight | URL |
-|--------|-------|-------------|-----|
-| {Documentation} | {Topic} | {Key takeaway} | {link} |
-
-#### Discovered Dependencies
-| Dependency | Version | Purpose | Status |
-|------------|---------|---------|--------|
-| {package} | {version} | {Why needed} | New/Existing |
-
-#### Warnings & Gotchas
-| Issue | Location | Recommendation |
-|-------|----------|----------------|
-| {Potential problem} | {File/function} | {How to handle} |
-
-#### Key Decisions Made
-| Decision | Rationale | Alternative Considered |
-|----------|-----------|----------------------|
-| {Choice} | {Why this way} | {Other option} |
-
-### Output Format
-
-This becomes the **"Execution Context (Planner Handoff)"** section in the final plan document.
+| Table | Purpose |
+|-------|---------|
+| **Explored Files** | File, Purpose, Key Lines, Notes |
+| **Research Findings** | Source, Topic, Key Insight, URL |
+| **Discovered Dependencies** | Dependency, Version, Purpose, Status |
+| **Warnings & Gotchas** | Issue, Location, Recommendation |
+| **Key Decisions Made** | Decision, Rationale, Alternative |
 
 ---
 
@@ -294,60 +204,27 @@ Time, Technical, Resource limits
 
 **Trigger Keywords**: `API`, `fetch`, `database`, `migration`, `async`, `timeout`, `env`
 
-**See**: @.claude/guides/gap-detection.md for verification checklist
+**Full verification**: See @.claude/guides/gap-detection.md
 
 **Plan Sections**:
-```markdown
-## External Service Integration
-### API Calls Required
-| Call | From | To | Endpoint | SDK/HTTP | Status | Verification |
-|------|------|----|----------|----------|--------|--------------|
-| [Description] | [Service] | [Service] | [Path/URL] | [Package/Method] | [New/Existing] | [ ] Check |
-
-### New Endpoints to Create
-| Endpoint | Service | Method | Handler | Request Schema | Response Schema |
-|----------|---------|--------|---------|----------------|-----------------|
-
-### Environment Variables Required
-| Variable | Service | Status | Verification |
-|----------|---------|--------|--------------|
-| [VAR_NAME] | [Service] | [New/Existing] | [ ] In .env.example |
-
-### Error Handling Strategy
-| Operation | Failure Mode | User Notification | Fallback |
-|-----------|--------------|-------------------|----------|
-```
+- **API Calls Required**: Call, From, To, Endpoint, SDK/HTTP, Status, Verification
+- **New Endpoints to Create**: Endpoint, Service, Method, Handler, Request/Response Schema
+- **Environment Variables Required**: Variable, Service, Status, Verification
+- **Error Handling Strategy**: Operation, Failure Mode, User Notification, Fallback
 
 ---
 
 ## Step 3: Architecture & Design
 
-### Data Structures
-Schema changes, TypeScript interfaces, API shapes
+**Vibe Coding Guidelines**: See @.claude/skills/vibe-coding/SKILL.md
 
-### Module Boundaries
-New files, existing modifications, integration points
-
-### Vibe Coding Guidelines
-**See**: @.claude/skills/vibe-coding/SKILL.md
-
-| Target | Limit |
-|--------|-------|
-| Function | ≤50 lines |
-| Class/File | ≤200 lines |
-| Nesting | ≤3 levels |
-
-### Dependencies
-```
-[A] --uses--> [B] --calls--> [C]
-```
-
-### Risks
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-
-### Alternatives
-- **A**: Pros/Cons | **B**: Pros/Cons | **Chosen**: Reason
+| Aspect | Content |
+|--------|---------|
+| **Data Structures** | Schema changes, TypeScript interfaces, API shapes |
+| **Module Boundaries** | New files, existing modifications, integration points |
+| **Dependencies** | `[A] --uses--> [B] --calls--> [C]` |
+| **Risks** | Risk, Likelihood, Impact, Mitigation |
+| **Alternatives** | A: Pros/Cons | B: Pros/Cons | Chosen: Reason |
 
 ---
 
@@ -373,10 +250,7 @@ New files, existing modifications, integration points
 ```
 
 ### User Confirmation Gate
-> **⛔ CONFIRMATION REQUIRED - MANDATORY AskUserQuestion CALL**
->
-> **Status**: ✅ Plan complete (conversation only), ✅ No files created
->
+
 > **🚨 MANDATORY ACTION**: Before concluding, you MUST call `AskUserQuestion`:
 >
 > ```markdown
@@ -388,12 +262,7 @@ New files, existing modifications, integration points
 >   D) Run /02_execute (start implementation immediately)
 > ```
 >
-> **Proceed only after user selects option C or D.**
->
-> - IF user selects A or B → Continue planning dialogue
-> - IF user selects C → Instruct to run `/01_confirm` to save
-> - IF user selects D → Instruct to run `/02_execute` directly
-> - IF user provides ambiguous response → Re-call `AskUserQuestion` with same options
+> **Proceed only after user selects option C or D.** (A/B → continue, ambiguous → re-ask)
 
 ---
 
@@ -426,9 +295,4 @@ Create    Review      Execute      Archive
 - @.claude/guides/test-environment.md - Test framework detection
 - @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/gap-detection.md - External service verification
-
----
-
-## References
-- [Claude-Code-Development-Kit](https://github.com/peterkrueck/Claude-Code-Development-Kit)
-- **Branch**: `git rev-parse --abbrev-ref HEAD`
+- @.claude/guides/parallel-execution.md - Parallel exploration pattern

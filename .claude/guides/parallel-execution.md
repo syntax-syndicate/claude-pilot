@@ -3,6 +3,23 @@
 > **Last Updated**: 2026-01-15
 > **Version**: 1.0.0
 
+---
+
+## Quick Reference
+
+| Pattern | Command | Agents | Purpose |
+|---------|---------|--------|---------|
+| **Parallel Exploration** | `/00_plan` Step 0 | Explorer + Researcher | Codebase + external docs |
+| **Parallel Coder** | `/02_execute` Step 2.3 | Multiple Coders | Independent SCs |
+| **Parallel Verify** | `/02_execute` Step 2.4 | Tester + Validator + Code-Reviewer | Multi-angle verification |
+| **Parallel Review** | `/90_review` (optional) | Multiple Plan-Reviewers | Complex plan analysis |
+
+**Key Benefits**: 50-70% faster, 8x token efficiency, specialized agents per task
+
+**See Also**: @.claude/guides/system-integration.md - Agent coordination patterns
+
+---
+
 ## Overview
 
 This guide documents all parallel execution patterns used in claude-pilot for maximizing workflow efficiency through context isolation and concurrent agent execution.

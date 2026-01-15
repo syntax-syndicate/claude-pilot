@@ -101,12 +101,14 @@ fi
 
 ## Step 5: Delegate to Documenter Agent (Context Isolation)
 
+**Full details**: See @.claude/guides/3tier-documentation.md - Agent delegation pattern
+
 ### 🚀 MANDATORY ACTION: Documenter Agent Invocation
 
 > **CRITICAL**: YOU MUST invoke the Documenter Agent NOW using the Task tool for context isolation.
 > This is not optional. Execute this Task tool call immediately.
 
-> **Why Agent?**: Documenter Agent runs in **isolated context window** (~30K tokens internally). All documentation analysis and updates happen there. Only summary returns here, preserving main orchestrator context.
+**Why Agent?**: Documenter Agent runs in **isolated context window** (~30K tokens internally). Only summary returns here (8x token efficiency).
 
 **EXECUTE IMMEDIATELY - DO NOT SKIP** (unless `--no-docs` specified):
 
@@ -118,9 +120,7 @@ Task:
 
     RUN_ID: {RUN_ID}
     Plan Path: {DONE_PATH}
-
-    Changed files (from git diff):
-    {CHANGED_FILES}
+    Changed files (from git diff): {CHANGED_FILES}
 
     Update:
     - CLAUDE.md (Tier 1) - if project-level changes
@@ -128,67 +128,14 @@ Task:
     - docs/ai-context/ - always update project-structure.md, system-integration.md
     - Plan file - add execution summary
 
-    Archive implementation artifacts:
-    - test-scenarios.md
-    - coverage-report.txt
-    - ralph-loop-log.md
+    Archive: test-scenarios.md, coverage-report.txt, ralph-loop-log.md
 
     Return summary only.
 ```
 
-**VERIFICATION**: After sending Task call, wait for Documenter agent to return results before proceeding to Step 5.3.
+**Expected Output**: `<DOCS_COMPLETE>` marker with files updated and artifacts archived
 
-### 5.2 Context Flow Diagram
-
-```
-/03_close (Orchestrator - Main Context)
-    │
-    ├─► Read plan (1K tokens)
-    │
-    ├─► Task: Documenter Agent (Isolated Context)
-    │       ├─► [30K tokens consumed internally]
-    │       ├─► Reads: All changed files, existing docs
-    │       ├─► Updates: CLAUDE.md, CONTEXT.md, docs/ai-context/
-    │       ├─► Archives: test-scenarios.md, coverage-report.txt
-    │       └─► Returns: "Documentation updated (5 files)" (0.5K)
-    │
-    └─► Process summary (0.5K)
-
-Total Main Context: ~2K tokens (vs 35K+ without isolation)
-```
-
-### 5.3 Process Documenter Results
-
-#### Expected Output Format: `<DOCS_COMPLETE>`
-
-```markdown
-## Documentation Update Summary
-
-### Updates Complete ✅
-- CLAUDE.md: Updated (Project Structure, 3-Tier Documentation links)
-- docs/ai-context/: Updated (project-structure.md, system-integration.md)
-- Tier 2 CONTEXT.md: Updated (src/components/CONTEXT.md)
-- Plan file: Updated with execution summary
-
-### Files Updated
-- `CLAUDE.md`: Added new feature to Project Structure
-- `docs/ai-context/project-structure.md`: Added src/newfeature/
-- `src/components/CONTEXT.md`: Added newfile.ts
-
-### Artifacts Archived
-- `.pilot/plan/done/{RUN_ID}/test-scenarios.md`
-- `.pilot/plan/done/{RUN_ID}/coverage-report.txt`
-- `.pilot/plan/done/{RUN_ID}/ralph-loop-log.md`
-
-### Next Steps
-- None (documentation up to date)
-```
-
-### 5.4 Skip Delegation
-
-If `--no-docs` specified:
-- Skip Documenter Agent delegation
-- Note in commit message: "Documentation skipped (--no-docs)"
+**Skip**: If `--no-docs` specified, note in commit message
 
 ---
 
@@ -196,92 +143,17 @@ If `--no-docs` specified:
 
 > **NOTE**: This step is preserved for manual review. For automatic updates, use **Step 5: Delegate to Documenter Agent** instead.
 
-> **Before committing**: Ensure documentation is synchronized with implementation
+**Full documentation sync**: See @.claude/guides/3tier-documentation.md
 
-### 5.1 Check Documentation Updates
+### Check Documentation Updates
 
-Read the plan to identify affected components/features, then verify:
+| Tier | File | Max Lines | Trigger |
+|------|------|-----------|---------|
+| **Tier 1** | CLAUDE.md | 300 | Project-level changes |
+| **Tier 2** | Component CONTEXT.md | 200 | src/, lib/, components/ changes |
+| **Tier 3** | Feature CONTEXT.md | 150 | features/ changes |
 
-```bash
-# Check which tiers need updates based on plan scope
-PLAN_SCOPE=$(grep "## Scope" "$ACTIVE_PLAN_PATH" 2>/dev/null || echo "")
-
-# Determine affected tiers
-if echo "$PLAN_SCOPE" | grep -q "CLAUDE.md\|Project Structure"; then
-    TIER1_NEEDED=true
-fi
-if echo "$PLAN_SCOPE" | grep -q "src/\|lib/\|components/"; then
-    TIER2_NEEDED=true
-fi
-if echo "$PLAN_SCOPE" | grep -q "features/\|deep nested"; then
-    TIER3_NEEDED=true
-fi
-```
-
-### 5.2 Verify Document Sizes
-
-Check if any documentation exceeds size thresholds:
-
-```bash
-# Tier 1: CLAUDE.md (max 300 lines)
-if [ -f "CLAUDE.md" ]; then
-    LINES=$(wc -l < CLAUDE.md)
-    if [ "$LINES" -gt 300 ]; then
-        echo "⚠️ CLAUDE.md exceeds 300 lines (current: $LINES)"
-        echo "Consider moving detailed sections to docs/ai-context/"
-    fi
-fi
-
-# Tier 2/3: CONTEXT.md files (Tier 2: 200 lines, Tier 3: 150 lines)
-find . -name "CONTEXT.md" -type f | while read -r ctx_file; do
-    LINES=$(wc -l < "$ctx_file")
-    DEPTH=$(echo "$ctx_file" | tr '/' '\n' | wc -l)
-
-    if [ $DEPTH -ge 3 ] || [[ "$ctx_file" =~ features/ ]]; then
-        # Tier 3
-        if [ "$LINES" -gt 150 ]; then
-            echo "⚠️ $ctx_file exceeds 150 lines (current: $LINES)"
-        fi
-    else
-        # Tier 2
-        if [ "$LINES" -gt 200 ]; then
-            echo "⚠️ $ctx_file exceeds 200 lines (current: $LINES)"
-        fi
-    fi
-done
-```
-
-### 5.3 Prompt for Documentation Sync
-
-If documentation is outdated or exceeds thresholds:
-
-```
-📋 Documentation Review Required:
-
-Based on the completed work, the following documentation updates may be needed:
-
-- [ ] Tier 1 (CLAUDE.md): Project-level changes
-- [ ] Tier 2 (Component CONTEXT.md): Component architecture changes
-- [ ] Tier 3 (Feature CONTEXT.md): Feature implementation details
-- [ ] Document size management: Apply compression/split if needed
-
-Would you like to run /91_document to synchronize documentation now?
-- Enter 'y' to run /91_document auto-sync
-- Enter 's' to skip documentation (will note in commit)
-- Enter 'q' to abort and run manually later
-```
-
-### 5.4 Auto-Trigger /91_document
-
-If user accepts or if coverage/tests/documentation requirements are met:
-
-```bash
-# Auto-trigger if all quality gates pass
-if [ -n "$AUTO_SYNC_DOCS" ]; then
-    echo "Running /91_document auto-sync..."
-    # Invoke documentation sync skill
-fi
-```
+**Auto-sync**: Run `/91_document` to synchronize all tiers automatically
 
 ---
 
