@@ -3,6 +3,23 @@
 > **Last Updated**: 2026-01-15
 > **Version**: 1.0.0
 
+---
+
+## Quick Reference
+
+| Pattern | Command | Agents | Purpose |
+|---------|---------|--------|---------|
+| **Parallel Exploration** | `/00_plan` Step 0 | Explorer + Researcher | Codebase + external docs |
+| **Parallel Coder** | `/02_execute` Step 2.3 | Multiple Coders | Independent SCs |
+| **Parallel Verify** | `/02_execute` Step 2.4 | Tester + Validator + Code-Reviewer | Multi-angle verification |
+| **Parallel Review** | `/90_review` (optional) | Multiple Plan-Reviewers | Complex plan analysis |
+
+**Key Benefits**: 50-70% faster, 8x token efficiency, specialized agents per task
+
+**See Also**: @.claude/guides/system-integration.md - Agent coordination patterns
+
+---
+
 ## Overview
 
 This guide documents all parallel execution patterns used in claude-pilot for maximizing workflow efficiency through context isolation and concurrent agent execution.
@@ -305,10 +322,59 @@ Before parallel execution, always analyze:
 - Run integration tests after merge
 
 ### 4. Error Handling
-- If one parallel agent fails, note the failure
-- Continue waiting for other agents
-- Present all results together
-- Re-run only failed agents
+
+> **🚨 CRITICAL - TaskOutput Anti-Pattern**
+> **DO NOT** use `TaskOutput` after Task tool completion. Results are returned inline automatically.
+
+#### Anti-Pattern: DO NOT USE TaskOutput
+
+❌ **WRONG** - This causes errors:
+```
+Task: coder...
+# Agent completes, result returned inline
+TaskOutput: {task_id}  # THIS WILL FAIL - ID already consumed
+```
+
+✅ **CORRECT** - Process inline result directly:
+```
+Task: coder...
+# Agent result comes back inline, containing <CODER_COMPLETE> or <CODER_BLOCKED>
+# Process result immediately - look for completion marker
+```
+
+#### Why TaskOutput Fails
+
+1. **Task tool is synchronous**: Blocks until agent completes
+2. **Results return inline**: Agent output is in the Task tool result itself
+3. **ID is consumed**: After Task returns, the task_id is no longer valid
+4. **TaskOutput dumps entire transcript**: 70K+ tokens, wasteful and unnecessary
+
+#### Anti-Pattern: Infinite Wait Loops
+
+❌ **NEVER** do this:
+```bash
+while true; do
+  sleep 5
+  # Checking for something that already completed
+done
+```
+
+✅ **Instead**:
+- Task results come inline - process immediately
+- If confused about state, ask user for guidance
+- Use `AskUserQuestion`, not sleep loops
+
+#### Error Recovery Pattern
+
+If one parallel agent fails:
+1. Note the failure
+2. Continue waiting for other agents
+3. Present all results together
+4. Use `AskUserQuestion` for recovery options:
+   - "Retry the failed agent"
+   - "Continue with partial results"
+   - "Cancel execution"
+5. Re-run only failed agents (if user chooses retry)
 
 ### 5. Resource Management
 - Parallel execution increases API costs
