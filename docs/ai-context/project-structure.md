@@ -43,10 +43,10 @@ claude-pilot/
 │   │   ├── CONTEXT-tier2.md.template
 │   │   └── CONTEXT-tier3.md.template
 │   ├── skills/             # Reusable skill modules (4)
-│   │   ├── tdd/SKILL.md
-│   │   ├── ralph-loop/SKILL.md
-│   │   ├── vibe-coding/SKILL.md
-│   │   └── git-master/SKILL.md
+│   │   ├── tdd/SKILL.md (+ REFERENCE.md)
+│   │   ├── ralph-loop/SKILL.md (+ REFERENCE.md)
+│   │   ├── vibe-coding/SKILL.md (+ REFERENCE.md)
+│   │   └── git-master/SKILL.md (+ REFERENCE.md)
 │   ├── agents/             # Specialized agent configs (8)
 │   │   ├── explorer.md
 │   │   ├── researcher.md
@@ -245,7 +245,11 @@ When Tier 1 exceeds 300 lines, detailed sections move here:
 
 ### Skills (Reusable Modules)
 
-Located in `.claude/skills/{skill_name}/SKILL.md`:
+Located in `.claude/skills/{skill_name}/`:
+
+**Progressive Disclosure Pattern** (v3.3.2+):
+- `SKILL.md`: Quick reference (~75 lines, loaded every session)
+- `REFERENCE.md`: Detailed documentation (400-700 lines, loaded on-demand via @import)
 
 | Skill | Purpose |
 |-------|---------|
@@ -324,6 +328,14 @@ You are the Coder Agent. Implement features using TDD...
 
 ## Version History
 
+### v3.3.2 (2026-01-15)
+
+- **SKILL.md Progressive Disclosure**: Restructured 4 SKILL.md files (400-500+ lines -> ~75 lines)
+- **Created REFERENCE.md files**: 4 new reference files with detailed content (15-19KB each)
+- **Token optimization**: ~85% reduction in SKILL.md token usage per session
+- **Enhanced parallel execution**: Improved `/02_execute` Step 2.3 with MANDATORY ACTION headers
+- **@import pattern**: All SKILL.md files now link to respective REFERENCE.md for on-demand loading
+
 ### v3.3.1 (2026-01-15)
 
 - Fixed version triple-split issue (all 6 files now synced to 3.3.1)
@@ -389,11 +401,14 @@ You are the Coder Agent. Implement features using TDD...
 - `CLAUDE.md` - Tier 1: Project documentation
 - `.claude/guides/3tier-documentation.md` - 3-Tier system guide
 - `.claude/guides/prp-framework.md` - Problem-Requirements-Plan
-- `.claude/skills/vibe-coding/SKILL.md` - Code quality standards
-- `.claude/skills/tdd/SKILL.md` - Test-driven development
-- `.claude/skills/ralph-loop/SKILL.md` - Autonomous iteration
+- `.claude/skills/vibe-coding/SKILL.md` - Code quality standards (Quick Reference)
+- `.claude/skills/vibe-coding/REFERENCE.md` - Code quality detailed guide
+- `.claude/skills/tdd/SKILL.md` - Test-driven development (Quick Reference)
+- `.claude/skills/tdd/REFERENCE.md` - TDD detailed guide
+- `.claude/skills/ralph-loop/SKILL.md` - Autonomous iteration (Quick Reference)
+- `.claude/skills/ralph-loop/REFERENCE.md` - Ralph Loop detailed guide
 
 ---
 
 **Last Updated**: 2026-01-15
-**Template**: claude-pilot 3.3.1
+**Template**: claude-pilot 3.3.2
