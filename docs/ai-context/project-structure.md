@@ -94,7 +94,7 @@ claude-pilot/
 
 | File | Purpose | Agent Pattern |
 |------|---------|---------------|
-| `.claude/commands/00_plan.md` | Generate SPEC-First plan with PRP analysis | **MANDATORY**: Parallel Explorer + Researcher (Step 0) |
+| `.claude/commands/00_plan.md` | Generate SPEC-First plan with PRP analysis, Phase Boundary Protection (Level 3) | **MANDATORY**: Parallel Explorer + Researcher (Step 0) |
 | `.claude/commands/01_confirm.md` | Extract plan, create file, auto-review with Interactive Recovery | **MANDATORY**: Plan-Reviewer (Step 4) |
 | `.claude/commands/02_execute.md` | Implement with TDD + Ralph Loop | **MANDATORY**: Parallel Coders (Step 2.3), Parallel Verification (Step 2.4), Coder Delegation (Step 3) |
 | `.claude/commands/03_close.md` | Archive plan, commit changes | **MANDATORY**: Documenter (Step 5) |
@@ -319,6 +319,15 @@ You are the Coder Agent. Implement features using TDD...
 
 ## Version History
 
+### v3.2.1 (2026-01-15)
+
+- Enhanced `/00_plan` with Phase Boundary Protection (Level 3)
+- Added MANDATORY AskUserQuestion at plan completion boundary
+- Implemented pattern-based ambiguous confirmation handling (language-agnostic)
+- Added multi-option confirmation template (4 options: A-D)
+- Documented valid execution triggers to prevent misinterpretation
+- Updated system-integration.md with Phase Boundary Protection section
+
 ### v3.2.0 (Current)
 
 - Fixed agent YAML format for Claude Code CLI recognition
@@ -369,4 +378,4 @@ You are the Coder Agent. Implement features using TDD...
 ---
 
 **Last Updated**: 2026-01-15
-**Template**: claude-pilot 3.2.0
+**Template**: claude-pilot 3.2.1

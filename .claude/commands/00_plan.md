@@ -32,17 +32,43 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 > - CANNOT DO: Edit files, Write files, Create code, Implement
 > - EXIT ONLY VIA: User explicitly runs `/01_confirm` or `/02_execute`
 
-### Delegation Detection Principle
+### MANDATORY ACTION: Ambiguous Confirmation Handling
 
-> **CRITICAL**: When user says "go ahead", "proceed", "알아서 해", etc.
-> **ALWAYS interpret as**: "Continue with PLANNING activities"
-> **NEVER interpret as**: "Start implementing/coding"
+> **🚨 MANDATORY**: At plan completion, you MUST call `AskUserQuestion` before ANY phase transition.
+>
+> **CRITICAL**: Do NOT try to detect specific words or phrases. ANY ambiguous confirmation (e.g., "go ahead", "proceed", "that looks good", "알아서 해", "그래 그렇게 해") MUST trigger the `AskUserQuestion` flow below.
+>
+> **NEVER use Yes/No questions** - always provide explicit multi-option choices.
 
-**Valid triggers to exit planning**:
+#### When to Call AskUserQuestion
+
+Call `AskUserQuestion` when:
+1. Plan discussion appears complete
+2. User provides ambiguous confirmation ("go ahead", "proceed", etc.)
+3. User says "that looks good" or similar approval
+4. ANY uncertainty about user intent
+
+#### AskUserQuestion Template (MANDATORY)
+
+```markdown
+AskUserQuestion:
+  What would you like to do next?
+  A) Continue refining the plan
+  B) Explore alternative approaches
+  C) Run /01_confirm (save plan for execution)
+  D) Run /02_execute (start implementation immediately)
+```
+
+Proceed only AFTER user selects explicit option (C or D for execution).
+
+### Valid Execution Triggers
+
+**ONLY these triggers allow phase transition to execution**:
 1. User explicitly types `/01_confirm` or `/02_execute`
 2. User explicitly says "start coding now" or "begin implementation"
+3. User selects option C or D from AskUserQuestion above
 
-**When uncertain**: "I'll continue refining the plan. When ready to implement, run `/01_confirm`."
+**All other responses** → Continue planning or AskUserQuestion to clarify.
 
 ---
 
@@ -342,11 +368,27 @@ New files, existing modifications, integration points
 ```
 
 ### User Confirmation Gate
-> **⛔ CONFIRMATION REQUIRED**
-> Status: ✅ Plan complete (conversation only), ✅ No files created
-> - IF correct → Run `/01_confirm` to save
-> - IF changes → Request modifications
-> To execute: `/01_confirm` then `/02_execute`, OR `/02_execute` directly
+> **⛔ CONFIRMATION REQUIRED - MANDATORY AskUserQuestion CALL**
+>
+> **Status**: ✅ Plan complete (conversation only), ✅ No files created
+>
+> **🚨 MANDATORY ACTION**: Before concluding, you MUST call `AskUserQuestion`:
+>
+> ```markdown
+> AskUserQuestion:
+>   What would you like to do next?
+>   A) Continue refining the plan
+>   B) Explore alternative approaches
+>   C) Run /01_confirm (save plan for execution)
+>   D) Run /02_execute (start implementation immediately)
+> ```
+>
+> **Proceed only after user selects option C or D.**
+>
+> - IF user selects A or B → Continue planning dialogue
+> - IF user selects C → Instruct to run `/01_confirm` to save
+> - IF user selects D → Instruct to run `/02_execute` directly
+> - IF user provides ambiguous response → Re-call `AskUserQuestion` with same options
 
 ---
 

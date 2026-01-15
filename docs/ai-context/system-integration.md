@@ -16,6 +16,42 @@
                                                                           /90_review (anytime)
 ```
 
+### Phase Boundary Protection (Updated 2026-01-15)
+
+The `/00_plan` command includes **Level 3 (Strong) phase boundary protection** to prevent ambiguous confirmations from triggering execution.
+
+#### Key Features
+
+1. **Pattern-Based Detection**: Language-agnostic approach (no word lists)
+2. **MANDATORY AskUserQuestion**: Multi-option confirmation at plan completion
+3. **Valid Execution Triggers**: Only explicit commands allow phase transition
+
+#### AskUserQuestion Template
+
+```markdown
+AskUserQuestion:
+  What would you like to do next?
+  A) Continue refining the plan
+  B) Explore alternative approaches
+  C) Run /01_confirm (save plan for execution)
+  D) Run /02_execute (start implementation immediately)
+```
+
+#### Valid Execution Triggers
+
+- User explicitly types `/01_confirm` or `/02_execute`
+- User explicitly says "start coding now" or "begin implementation"
+- User selects option C or D from AskUserQuestion
+
+**All other responses** (including "go ahead", "proceed", "그래 그렇게 해") → Continue planning or re-call AskUserQuestion.
+
+#### Anti-Patterns
+
+- **NEVER** use Yes/No questions at phase boundaries
+- **NEVER** try to detect specific words or phrases
+- **ALWAYS** provide explicit multi-option choices
+- **ALWAYS** call AskUserQuestion when uncertain about user intent
+
 ### /01_confirm Command Workflow
 
 The `/01_confirm` command extracts the plan from the `/00_plan` conversation and creates a plan file in `.pilot/plan/pending/`.
@@ -515,4 +551,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-15
-**Template**: claude-pilot 3.2.0
+**Template**: claude-pilot 3.2.1
