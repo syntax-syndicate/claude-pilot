@@ -381,6 +381,102 @@ If Coder outputs `<CODER_BLOCKED>`:
 
 ---
 
+### 3.4 Result Processing (CRITICAL)
+
+> **🚨 CRITICAL - TaskOutput Anti-Pattern**
+> **DO NOT** use `TaskOutput` after Task tool completion. Results are returned inline automatically.
+
+#### Anti-Pattern: DO NOT USE TaskOutput
+
+❌ **WRONG** - This causes errors:
+```
+Task: coder...
+# Agent completes, result returned inline
+TaskOutput: {task_id}  # THIS WILL FAIL - ID already consumed
+```
+
+✅ **CORRECT** - Process inline result directly:
+```
+Task: coder...
+# Agent result comes back inline, containing <CODER_COMPLETE> or <CODER_BLOCKED>
+# Process result immediately - look for completion marker
+```
+
+#### Why TaskOutput Fails
+
+1. **Task tool is synchronous**: Blocks until agent completes
+2. **Results return inline**: Agent output is in the Task tool result itself
+3. **ID is consumed**: After Task returns, the task_id is no longer valid
+4. **TaskOutput dumps entire transcript**: 70K+ tokens, wasteful and unnecessary
+
+#### Processing Inline Results
+
+When Coder Agent returns, look for completion markers:
+
+- `<CODER_COMPLETE>`: All success criteria met, proceed to next step
+- `<CODER_BLOCKED>`: Cannot complete, requires user intervention
+- Error/no result: Use AskUserQuestion for recovery
+
+**DO NOT**:
+- Call `TaskOutput` after Task completes
+- Enter `sleep` or wait loops
+- Poll for results that are already returned
+
+---
+
+### 3.5 Error Recovery
+
+If an error occurs during agent execution:
+
+1. **Report error to user** with context
+2. **Use AskUserQuestion** for recovery options
+3. **DO NOT** enter infinite wait loops
+
+#### Error Recovery Pattern
+
+```markdown
+If Coder Agent returns error or no result:
+  → Use AskUserQuestion with options:
+    - "Retry the task"
+    - "Continue manually"
+    - "Cancel execution"
+```
+
+#### Anti-Pattern: Infinite Wait Loops
+
+❌ **NEVER** do this:
+```bash
+while true; do
+  sleep 5
+  # Checking for something that already completed
+done
+```
+
+✅ **Instead**:
+- Task results come inline - process immediately
+- If confused about state, ask user for guidance
+- Use `AskUserQuestion`, not sleep loops
+
+#### Error Recovery Example
+
+```markdown
+## Coder Agent Summary
+
+### Implementation Blocked ⚠️
+- Status: <CODER_BLOCKED>
+- Reason: Cannot achieve 80% coverage threshold
+- Current Coverage: 72%
+
+AskUserQuestion:
+  "Agent is blocked at 72% coverage (target 80%). What should we do?"
+  Options:
+    - "Continue with lower coverage"
+    - "Add more edge case tests"
+    - "Document as known limitation"
+```
+
+---
+
 ## Step 4: Execute with TDD (Legacy - Use Agent Instead)
 
 > **NOTE**: This step is preserved for backward compatibility. For new plans, use **Step 3: Delegate to Coder Agent** instead.
