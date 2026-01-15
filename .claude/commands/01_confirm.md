@@ -139,7 +139,7 @@ PLAN_FILE="$PROJECT_ROOT/.pilot/plan/pending/${TS}_${WORK_NAME}.md"
 
 This ensures continuity between planning (`/00_plan`) and execution (`/02_execute`) phases.
 
-**Vibe Coding**: See @.claude/guides/vibe-coding.md
+**Vibe Coding**: See @.claude/skills/vibe-coding/SKILL.md
 **Gap Detection**: See @.claude/guides/gap-detection.md
 
 ### 3.2 Write File
@@ -271,7 +271,7 @@ WHILE BLOCKING > 0 AND ITERATION <= MAX:
 
 ## Related Guides
 - @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/gap-detection.md - External service verification
 
 ---

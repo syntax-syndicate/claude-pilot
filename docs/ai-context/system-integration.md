@@ -328,10 +328,10 @@ Capture conversation state from `/00_plan` to ensure continuity between planning
 ## Related Documentation
 
 - `.claude/guides/prp-framework.md` - Problem-Requirements-Plan definition
-- `.claude/guides/vibe-coding.md` - Code quality standards
+- `.claude/skills/vibe-coding/SKILL.md` - Code quality standards
 - `.claude/guides/gap-detection.md` - External service verification
-- `.claude/guides/tdd-methodology.md` - Test-driven development
-- `.claude/guides/ralph-loop.md` - Autonomous iteration
+- `.claude/skills/tdd/SKILL.md` - Test-driven development
+- `.claude/skills/ralph-loop/SKILL.md` - Autonomous iteration
 - `.claude/guides/parallel-execution.md` - Parallel execution patterns
 
 ---

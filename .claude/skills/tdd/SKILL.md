@@ -7,8 +7,7 @@ description: Test-Driven Development (TDD) skill for Red-Green-Refactor cycle. U
 
 > **Purpose**: Execute TDD Red-Green-Refactor cycle for feature implementation
 > **Target**: Coder Agent implementing features with test-first methodology
-> **Last Updated**: 2026-01-14
-> **References**: @.claude/guides/tdd-methodology.md
+> **Last Updated**: 2026-01-15
 
 ---
 
@@ -52,9 +51,9 @@ pytest  # Expected: ALL PASS
 
 ### Out of Scope
 - Test framework selection → See @.claude/guides/test-environment.md
-- Coverage thresholds → See @.claude/guides/ralph-loop.md
-- Code quality standards → See @.claude/guides/vibe-coding.md
-- Autonomous completion loop → See @.claude/guides/ralph-loop.md
+- Coverage thresholds → See @.claude/skills/ralph-loop/SKILL.md
+- Code quality standards → See @.claude/skills/vibe-coding/SKILL.md
+- Autonomous completion loop → See @.claude/skills/ralph-loop/SKILL.md
 
 ---
 
@@ -415,9 +414,8 @@ git-master (Commit working code)
 ## Further Reading
 
 ### Internal Documentation
-- @.claude/guides/tdd-methodology.md - Full TDD methodology guide
-- @.claude/guides/ralph-loop.md - Autonomous completion loop
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/ralph-loop/SKILL.md - Autonomous completion loop
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/test-environment.md - Test framework detection
 
 ### External Resources

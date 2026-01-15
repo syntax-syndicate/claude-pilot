@@ -207,6 +207,6 @@ fi
 
 ## See Also
 
-- @.claude/guides/tdd-methodology.md - Red-Green-Refactor cycle
-- @.claude/guides/ralph-loop.md - Autonomous completion loop
+- @.claude/skills/tdd/SKILL.md - Red-Green-Refactor cycle
+- @.claude/skills/ralph-loop/SKILL.md - Autonomous completion loop
 - @.claude/guides/gap-detection.md - Test Plan Verification (9.7)

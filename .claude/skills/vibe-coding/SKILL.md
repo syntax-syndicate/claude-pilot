@@ -7,8 +7,7 @@ description: LLM-readable code standards for maintainable code. Functions ≤50 
 
 > **Purpose**: Enforce LLM-readable code standards for maintainable, testable, comprehensible code
 > **Target**: Coder Agent during Green/Refactor phases
-> **Last Updated**: 2026-01-14
-> **References**: @.claude/guides/vibe-coding.md
+> **Last Updated**: 2026-01-15
 
 ---
 
@@ -548,9 +547,8 @@ git-master (Commit clean code)
 ## Further Reading
 
 ### Internal Documentation
-- @.claude/guides/vibe-coding.md - Full Vibe Coding guide
-- @.claude/guides/tdd-methodology.md - Red-Green-Refactor cycle
-- @.claude/guides/ralph-loop.md - Autonomous completion loop
+- @.claude/skills/tdd/SKILL.md - Red-Green-Refactor cycle
+- @.claude/skills/ralph-loop/SKILL.md - Autonomous completion loop
 
 ### External Resources
 - [Clean Code by Robert C. Martin](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882)

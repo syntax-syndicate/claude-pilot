@@ -31,12 +31,9 @@ claude-pilot/
 │   │   ├── 91_document.md  # Update docs
 │   │   ├── 92_init.md      # Initialize 3-Tier docs
 │   │   └── 999_publish.md  # Publish to npm
-│   ├── guides/             # Methodology guides (9)
+│   ├── guides/             # Methodology guides (6)
 │   │   ├── prp-framework.md       # Problem-Requirements-Plan
-│   │   ├── vibe-coding.md         # Code quality standards
 │   │   ├── gap-detection.md       # External service verification
-│   │   ├── tdd-methodology.md     # Test-driven development
-│   │   ├── ralph-loop.md          # Autonomous iteration
 │   │   ├── parallel-execution.md  # Parallel execution patterns
 │   │   ├── 3tier-documentation.md # Documentation system
 │   │   ├── review-checklist.md    # Code review criteria
@@ -333,6 +330,9 @@ You are the Coder Agent. Implement features using TDD...
 - Added VERIFICATION wait instructions after agent invocations
 - Enhanced parallel execution support with explicit "send in same message" instructions
 - Improved agent delegation reliability through direct imperative language
+- **Removed duplicate Guide files** (tdd-methodology, ralph-loop, vibe-coding)
+- **Updated all references to use Skill files** instead of Guide files
+- **Reduced token usage by ~35%** for `/02_execute` command
 
 ### v3.1.4
 
@@ -362,7 +362,9 @@ You are the Coder Agent. Implement features using TDD...
 - `CLAUDE.md` - Tier 1: Project documentation
 - `.claude/guides/3tier-documentation.md` - 3-Tier system guide
 - `.claude/guides/prp-framework.md` - Problem-Requirements-Plan
-- `.claude/guides/vibe-coding.md` - Code quality standards
+- `.claude/skills/vibe-coding/SKILL.md` - Code quality standards
+- `.claude/skills/tdd/SKILL.md` - Test-driven development
+- `.claude/skills/ralph-loop/SKILL.md` - Autonomous iteration
 
 ---
 

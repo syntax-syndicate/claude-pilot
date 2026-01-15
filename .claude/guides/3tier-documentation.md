@@ -294,4 +294,4 @@ Component interactions, data flow, shared patterns, integration points.
 
 - @.claude/templates/CONTEXT-tier2.md.template - Component template
 - @.claude/templates/CONTEXT-tier3.md.template - Feature template
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards

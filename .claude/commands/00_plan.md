@@ -298,7 +298,7 @@ Schema changes, TypeScript interfaces, API shapes
 New files, existing modifications, integration points
 
 ### Vibe Coding Guidelines
-**See**: @.claude/guides/vibe-coding.md
+**See**: @.claude/skills/vibe-coding/SKILL.md
 
 | Target | Limit |
 |--------|-------|
@@ -377,7 +377,7 @@ Create    Review      Execute      Archive
 ## Related Guides
 - @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition
 - @.claude/guides/test-environment.md - Test framework detection
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/gap-detection.md - External service verification
 
 ---

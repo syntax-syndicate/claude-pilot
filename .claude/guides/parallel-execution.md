@@ -386,9 +386,9 @@ After parallel execution, verify:
 
 ## Related Guides
 
-- **TDD Methodology**: @.claude/guides/tdd-methodology.md
-- **Ralph Loop**: @.claude/guides/ralph-loop.md
-- **Vibe Coding**: @.claude/guides/vibe-coding.md
+- **TDD Methodology**: @.claude/skills/tdd/SKILL.md
+- **Ralph Loop**: @.claude/skills/ralph-loop/SKILL.md
+- **Vibe Coding**: @.claude/skills/vibe-coding/SKILL.md
 - **Gap Detection**: @.claude/guides/gap-detection.md
 - **Review Checklist**: @.claude/guides/review-checklist.md
 

@@ -15,9 +15,6 @@ _Execute plan using Ralph Loop TDD pattern - iterate until all tests pass._
 - **No drift**: Update plan and todo list if scope changes
 - **Evidence required**: Never claim completion without verification output
 
-**TDD Methodology**: See @.claude/guides/tdd-methodology.md
-**Ralph Loop**: See @.claude/guides/ralph-loop.md
-
 ---
 
 ## Step 0: Source Worktree Utilities
@@ -330,7 +327,7 @@ If Coder outputs `<CODER_BLOCKED>`:
 
 > **NOTE**: This step is preserved for backward compatibility. For new plans, use **Step 3: Delegate to Coder Agent** instead.
 
-**TDD Cycle (Red-Green-Refactor)**: See @.claude/guides/tdd-methodology.md
+**TDD Cycle (Red-Green-Refactor)**: See @.claude/skills/tdd/SKILL.md
 
 ### 4.1 Discovery
 Search codebase: `Glob **/*{keyword}*`, `Grep {pattern}`
@@ -362,7 +359,7 @@ Improve quality (DRY, SOLID), Run ALL tests → confirm GREEN
 
 ## Step 5: Ralph Loop (Autonomous Completion)
 
-**Ralph Loop**: See @.claude/guides/ralph-loop.md
+**Ralph Loop**: See @.claude/skills/ralph-loop/SKILL.md
 
 > **Principle**: Self-correcting loop until completion marker detected
 
@@ -505,9 +502,9 @@ If `--no-docs` specified, skip documentation
 ---
 
 ## Related Guides
-- @.claude/guides/tdd-methodology.md - Red-Green-Refactor cycle
-- @.claude/guides/ralph-loop.md - Autonomous completion loop
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/tdd/SKILL.md - Red-Green-Refactor cycle
+- @.claude/skills/ralph-loop/SKILL.md - Autonomous completion loop
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/test-environment.md - Test framework detection
 - @.claude/guides/3tier-documentation.md - Auto-sync documentation
 

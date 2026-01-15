@@ -17,7 +17,7 @@ _Review plan for completeness, gaps, and quality issues before execution._
 
 **Review Checklist**: See @.claude/guides/review-checklist.md
 **Gap Detection**: See @.claude/guides/gap-detection.md
-**Vibe Coding**: See @.claude/guides/vibe-coding.md
+**Vibe Coding**: See @.claude/skills/vibe-coding/SKILL.md
 
 ## Agent Invocation Pattern
 
@@ -206,7 +206,7 @@ Execute all 8 reviews for every plan:
 
 ## Step 4: Vibe Coding Compliance
 
-**Vibe Coding**: See @.claude/guides/vibe-coding.md
+**Vibe Coding**: See @.claude/skills/vibe-coding/SKILL.md
 
 | Target | Limit | Check |
 |--------|-------|-------|
@@ -363,7 +363,7 @@ Execute all 8 reviews for every plan:
 ## Related Guides
 - @.claude/guides/review-checklist.md - Comprehensive review checklist
 - @.claude/guides/gap-detection.md - External service verification
-- @.claude/guides/vibe-coding.md - Code quality standards
+- @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 
 ---
 
