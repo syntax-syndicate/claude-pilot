@@ -190,9 +190,9 @@ Execute worktree_a      Execute worktree_b
 13. **Step 9: Auto-Chain to Documentation**
     - Trigger `/91_document` if all criteria met
 
-### /03_close Command Workflow (Updated 2026-01-15)
+### /03_close Command Workflow (Updated 2026-01-17)
 
-The `/03_close` command archives completed plans and creates git commits. **Worktree mode includes complete cleanup** (v3.3.4) with error trap for lock cleanup.
+The `/03_close` command archives completed plans and creates git commits. **Worktree mode includes complete cleanup** (v3.3.4) with error trap for lock cleanup. **v4.0.4 adds context restoration from plan file** for multi-worktree concurrent execution.
 
 #### Worktree Cleanup Flow (v3.3.4)
 
@@ -255,6 +255,94 @@ fi
 - Trap fires on EXIT (success) or ERR (failure)
 - Lock removed even if cleanup fails partially
 - Trap cleared on success to prevent double-cleanup
+
+#### Worktree Context Restoration (v4.0.4)
+
+**Purpose**: Enable `/03_close` to work regardless of Bash cwd (which resets to project root on each call)
+
+**Problem Fixed**:
+- Claude Code Bash environment resets cwd to project root on each call
+- `/02_execute --wt` stored active pointer using worktree branch key (after cd to worktree)
+- `/03_close` runs from main project (due to cwd reset), looked for main branch key
+- Active pointer mismatch: stored as `feature_xxx.txt`, searched as `main.txt`
+- Worktree path stored as relative path (`../xxx`), breaks when cwd differs
+
+**Solution Components**:
+
+1. **Absolute Path Conversion** (worktree-utils.sh):
+   ```bash
+   create_worktree() {
+       # ...
+       worktree_dir="$(cd "$worktree_dir" && pwd)"  # Convert to absolute path
+       printf "%s" "$worktree_dir"
+   }
+   ```
+
+2. **Dual Active Pointer Storage** (02_execute.md):
+   ```bash
+   # BEFORE cd to worktree:
+   MAIN_KEY="$(printf "%s" "$MAIN_BRANCH" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
+   printf "%s" "$PLAN_PATH" > "$PROJECT_ROOT/.pilot/plan/active/${MAIN_KEY}.txt"
+
+   # ALSO store with worktree branch key:
+   WT_KEY="$(printf "%s" "$BRANCH_NAME" | sed -E 's/[^a-zA-Z0-9._-]+/_/g')"
+   printf "%s" "$PLAN_PATH" > "$PROJECT_ROOT/.pilot/plan/active/${WT_KEY}.txt"
+   ```
+
+3. **Context Restoration in Close** (03_close.md):
+   ```bash
+   # Step 1.5: Worktree Context Restoration
+   if grep -q "## Worktree Info" "$PLAN_PATH"; then
+       WT_PATH="$(grep 'Worktree Path:' "$PLAN_PATH" | sed 's/.*: //')"
+       MAIN_PROJECT="$(grep 'Main Project:' "$PLAN_PATH" | sed 's/.*: //')"
+
+       if [ -d "$WT_PATH" ]; then
+           cd "$WT_PATH"
+           # ... squash merge, cleanup
+       fi
+   fi
+   ```
+
+4. **Enhanced Metadata Format**:
+   ```markdown
+   ## Worktree Info
+   - Branch: feature/20260117-xxx
+   - Worktree Path: /absolute/path/to/worktree
+   - Main Branch: main
+   - Main Project: /absolute/path/to/main/project
+   - Lock File: /absolute/path/to/.locks/xxx.lock
+   - Created At: 2026-01-17T06:31:16
+   ```
+
+5. **Force Cleanup for Dirty Worktrees**:
+   ```bash
+   cleanup_worktree() {
+       # Try normal remove first
+       if ! git worktree remove "$WT_PATH" 2>/dev/null; then
+           # Force remove for dirty worktrees
+           git worktree remove --force "$WT_PATH"
+       fi
+   }
+   ```
+
+**Updated Functions** (worktree-utils.sh):
+
+| Function | Change |
+|----------|--------|
+| `create_worktree()` | Returns absolute path (was relative) |
+| `add_worktree_metadata()` | Accepts 6 parameters (added main_project and lock_file) |
+| `read_worktree_metadata()` | Parses 5 fields using multi-line extraction (was 3 fields with grep -A1) |
+| `cleanup_worktree()` | Supports --force option for dirty worktrees |
+
+**Integration Points**:
+
+| Component | Integration | Data Flow |
+|-----------|-------------|-----------|
+| `/02_execute` Step 1.1 | Stores dual-key pointers BEFORE cd | `.pilot/plan/active/{main}.txt` + `.pilot/plan/active/{feature}.txt` |
+| `/02_execute` Step 1.1.1 | Calls create_worktree (returns absolute) | Absolute path to worktree |
+| `/02_execute` Step 1.1.1 | Calls add_worktree_metadata (6 params) | Plan file with all 5 metadata fields |
+| `/03_close` Step 1.5 | Reads context from plan file | Restores WT_PATH, MAIN_PROJECT, LOCK_FILE |
+| `/03_close` cleanup | Force removes dirty worktrees | Graceful cleanup without manual intervention |
 
 #### Integration Points
 

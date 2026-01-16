@@ -118,6 +118,7 @@ claude-pilot/
 │       ├── initializer.py  # Init with external skills + Codex sync (UPDATED)
 │       └── updater.py      # External skills + Codex sync functions (UPDATED)
 ├── tests/                  # Test files
+│   ├── test_worktree_utils.py  # Worktree utilities tests (NEW: 8 tests, 2026-01-17)
 ├── CLAUDE.md               # Tier 1: Project documentation
 ├── README.md               # Project README
 ├── pyproject.toml          # Package configuration
@@ -429,6 +430,19 @@ claude-pilot update --apply-statusline
 ---
 
 ## Version History
+
+### v4.0.4 (2026-01-17)
+
+- **Worktree Close Flow Improvement**: Fixed worktree mode `/02_execute` and `/03_close` for multi-worktree concurrent execution
+- **Absolute paths**: `create_worktree()` now returns absolute paths (no more relative paths breaking on cwd reset)
+- **Enhanced metadata**: `add_worktree_metadata()` stores 5 fields (added Main Project, Lock File)
+- **Dual-key storage**: Active pointers stored before cd to worktree (both main + worktree branch keys)
+- **Context restoration**: `/03_close` reads context from plan file instead of relying on cwd
+- **Force cleanup**: `cleanup_worktree()` supports --force option for dirty worktrees
+- **Fixed parsing**: `read_worktree_metadata()` uses multi-line extraction (not grep -A1)
+- **New tests**: `test_worktree_utils.py` with 8 tests covering worktree utilities
+- **Updated files**: worktree-utils.sh, 02_execute.md, 03_close.md, test_worktree_utils.py
+- **Verification**: All 7 success criteria met (SC-1 through SC-7)
 
 ### v3.4.0 (2026-01-16)
 
