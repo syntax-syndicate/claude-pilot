@@ -17,8 +17,9 @@ Methodology guides providing detailed explanations of development workflows, pat
 | `claude-code-standards.md` | Official Claude Code standards | 514 | Reference: Directory structure, conventions |
 | `requirements-tracking.md` | User Requirements Collection methodology | 192 | Planning: Track user requirements verbatim |
 | `requirements-verification.md` | Requirements Verification methodology | 254 | Confirmation: Verify 100% coverage |
+| `instruction-clarity.md` | LLM-readable instruction patterns (NEW) | 271 | Authoring: Clear conditional logic for LLMs |
 
-**Total**: 9 guides, 2792 lines (average: 310 lines per guide)
+**Total**: 10 guides, 3063 lines (average: 306 lines per guide)
 
 ## Common Tasks
 
@@ -158,6 +159,32 @@ Methodology guides providing detailed explanations of development workflows, pat
 - File size limits
 - Cross-reference patterns
 
+### Write Clear Instructions for LLMs
+- **Task**: Ensure LLMs can reliably understand conditional logic
+- **Guide**: @.claude/guides/instruction-clarity.md
+- **Output**: Clear, unambiguous instructions
+- **Usage**: Authoring command files with conditionals
+
+**Key patterns**:
+- Default Behavior First: State default action, then exceptions
+- Positive Framing: "EXECUTE" instead of "DO NOT SKIP"
+- Separate Sections: Default vs Exception in different sections
+- No "unless" in conditional logic
+
+**Before** (confusing):
+```markdown
+**EXECUTE IMMEDIATELY - DO NOT SKIP** (unless `--no-docs` specified):
+```
+
+**After** (clear):
+```markdown
+### Default Behavior
+Always invoke Documenter Agent after plan completion.
+
+### Exception: --no-docs flag
+When `--no-docs` flag is provided, skip this step entirely.
+```
+
 ## Patterns
 
 ### Guide Structure Pattern
@@ -247,6 +274,7 @@ Most guides start with a quick reference table for fast lookup:
 - `prp-framework.md`: Requirements methodology
 - `gap-detection.md`: External service review
 - `test-environment.md`: Test framework detection
+- `instruction-clarity.md`: LLM-readable instruction patterns (NEW)
 
 ### Quality Guides
 - `review-checklist.md`: Code review criteria
@@ -271,6 +299,7 @@ Most guides start with a quick reference table for fast lookup:
 6. `parallel-execution.md` (565 lines): Verify patterns (may need splitting)
 7. `requirements-tracking.md` (192 lines): Newly created, good size
 8. `requirements-verification.md` (254 lines): Newly created, good size
+9. `instruction-clarity.md` (271 lines): Newly created, good size (NEW)
 
 **Note**: `claude-code-standards.md` (514 lines) is newly created and comprehensive.
 

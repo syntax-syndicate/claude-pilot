@@ -129,9 +129,16 @@ fi
 
 ---
 
-## Step 5: Delegate to Documenter Agent (Context Isolation)
+## Step 5: Documenter Agent (Context Isolation)
 
 **Full details**: See @.claude/guides/3tier-documentation.md - Agent delegation pattern
+
+### Default Behavior
+Always invoke Documenter Agent after plan completion.
+
+### Exception: --no-docs flag
+When `--no-docs` flag is provided, skip this step entirely.
+Note in commit message: "Documentation skipped (--no-docs)"
 
 ### 🚀 MANDATORY ACTION: Documenter Agent Invocation
 
@@ -140,7 +147,7 @@ fi
 
 **Why Agent?**: Documenter Agent runs in **isolated context window** (~30K tokens internally). Only summary returns here (8x token efficiency).
 
-**EXECUTE IMMEDIATELY - DO NOT SKIP** (unless `--no-docs` specified):
+**EXECUTE IMMEDIATELY**:
 
 ```markdown
 Task:
@@ -165,8 +172,6 @@ Task:
 
 **Expected Output**: `<DOCS_COMPLETE>` marker with files updated and artifacts archived
 
-**Skip**: If `--no-docs` specified, note in commit message
-
 ---
 
 ## Step 6: Documentation Checklist (Manual - Use Agent Instead)
@@ -187,9 +192,13 @@ Task:
 
 ---
 
-## Step 7: Git Commit (Default)
+## Step 7: Git Commit
 
-> **Skip only if `no-commit` specified - commit is default behavior**
+### Default Behavior
+Always create git commit after closing plan.
+
+### Exception: no-commit flag
+Skip commit only when `no-commit` argument is explicitly provided.
 
 ### 7.1 Identify Modified Repositories
 

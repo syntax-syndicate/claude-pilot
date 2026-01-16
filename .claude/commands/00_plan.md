@@ -16,9 +16,9 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 
 > **⚠️ LANGUAGE - PLAN OUTPUT**: All plan documents MUST be written in English, regardless of conversation language.
 
-> **⚠️ CRITICAL**: DO NOT start implementation during /00_plan.
+> **⚠️ CRITICAL**: /00_plan is read-only. Implementation starts ONLY after `/01_confirm` → `/02_execute`.
 > - ❌ NO: Code editing, test writing, file creation
-> - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning. Implementation starts ONLY after `/01_confirm` → `/02_execute`
+> - ✅ OK: Exploration (Glob, Grep, Read), Analysis, Planning
 
 ---
 
@@ -26,10 +26,10 @@ _Explore codebase, gather requirements, and design SPEC-First execution plan._
 
 ### Current Phase: PLANNING
 
-> **YOU ARE IN PLANNING PHASE**
-> - CAN DO: Read, Search, Analyze, Discuss, Plan, Ask questions
-> - CANNOT DO: Edit files, Write files, Create code, Implement
-> - EXIT ONLY VIA: User explicitly runs `/01_confirm` or `/02_execute`
+**Planning Phase Rules**:
+- **CAN DO**: Read, Search, Analyze, Discuss, Plan, Ask questions
+- **CANNOT DO**: Edit files, Write files, Create code, Implement
+- **EXIT VIA**: User explicitly runs `/01_confirm` or `/02_execute`
 
 ### MANDATORY ACTION: Ambiguous Confirmation Handling
 

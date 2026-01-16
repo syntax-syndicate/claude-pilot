@@ -173,7 +173,7 @@ Wait 3s for CDN propagation, run `pip3 install --dry-run` to verify version avai
 - [ ] Package built successfully
 - [ ] **Package contents verified (agents/, skills/, AGENT.md.template included)** (Step 7-1)
 - [ ] Uploaded to PyPI
-- [ ] Git committed and pushed (unless --skip-git)
+- [ ] Git committed and pushed (or skipped when --skip-git specified)
 - [ ] New version verified on PyPI
 
 ---

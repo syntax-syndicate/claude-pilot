@@ -32,7 +32,7 @@ claude-pilot/
 │   │   ├── 91_document.md  # Update docs
 │   │   ├── 92_init.md      # Initialize 3-Tier docs
 │   │   └── 999_publish.md  # Publish to npm
-│   ├── guides/             # Methodology guides (9)
+│   ├── guides/             # Methodology guides (10)
 │   │   ├── CONTEXT.md      # Guide folder context (NEW)
 │   │   ├── claude-code-standards.md  # Official Claude Code standards (NEW)
 │   │   ├── prp-framework.md          # Problem-Requirements-Plan
@@ -42,7 +42,8 @@ claude-pilot/
 │   │   ├── review-checklist.md       # Code review criteria
 │   │   ├── test-environment.md       # Test framework detection
 │   │   ├── requirements-tracking.md  # User Requirements Collection (NEW)
-│   │   └── requirements-verification.md # Requirements Verification (NEW)
+│   │   ├── requirements-verification.md # Requirements Verification (NEW)
+│   │   └── instruction-clarity.md    # LLM-readable instruction patterns (NEW)
 │   ├── templates/          # PRP, CONTEXT, SKILL templates
 │   │   ├── gap-checklist.md
 │   │   ├── CONTEXT-tier2.md.template
@@ -416,6 +417,16 @@ claude-pilot update --apply-statusline
 
 ## Version History
 
+### v3.3.7 (2026-01-16)
+
+- **Instruction Clarity Improvement**: Refactored command files for LLM readability
+- **New guide**: instruction-clarity.md (271 lines) with clear conditional patterns
+- **Pattern improvements**: Default Behavior First, Positive Framing, Separate Sections
+- **Eliminated**: "DO NOT SKIP (unless...)" pattern from all command files
+- **Reduced**: "unless" pattern to 0 occurrences in command files
+- **Updated files**: 00_plan.md, 01_confirm.md, 02_execute.md, 03_close.md, 999_publish.md
+- **Added**: 4 "Default Behavior" + "Exception" section pairs
+
 ### v3.3.6 (2026-01-16)
 
 - **User Requirements Tracking & Verification**: Added UR collection to /00_plan, verification to /01_confirm
@@ -539,4 +550,4 @@ claude-pilot update --apply-statusline
 ---
 
 **Last Updated**: 2026-01-16
-**Version**: 3.3.6
+**Version**: 3.3.7

@@ -138,6 +138,9 @@ Read plan, extract: Deliverables, Phases, Tasks, Acceptance Criteria, Test Plan
 
 ## Step 3: Delegate to Coder Agent (Context Isolation)
 
+### Default Behavior
+Always delegate implementation to Coder Agent for context isolation.
+
 ### 🚀 MANDATORY ACTION: Coder Agent Invocation
 
 > **CRITICAL**: YOU MUST invoke the Coder Agent NOW using the Task tool for context isolation.
@@ -145,7 +148,7 @@ Read plan, extract: Deliverables, Phases, Tasks, Acceptance Criteria, Test Plan
 
 **Why Agent?**: Coder Agent runs in **isolated context window** (~80K tokens internally). Only summary returns here (8x token efficiency).
 
-**EXECUTE IMMEDIATELY - DO NOT SKIP**:
+**EXECUTE IMMEDIATELY**:
 
 ```markdown
 Task:
@@ -249,7 +252,7 @@ Implementation complete. All SCs met.
 - **Validator** (Haiku): Type check, lint, coverage thresholds
 - **Code-Reviewer** (Opus): Deep review for async bugs, memory leaks, security issues
 
-**EXECUTE IMMEDIATELY - DO NOT SKIP**:
+**EXECUTE IMMEDIATELY**:
 
 ```markdown
 Task:

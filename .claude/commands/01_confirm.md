@@ -185,9 +185,12 @@ echo "Plan created: $PLAN_FILE"
 
 > **Principle**: Plan validation with Interactive Recovery for BLOCKING findings
 
-### 4.1 Skip Checks
-- `--no-review`: Skip to STOP
-- `--lenient`: BLOCKING → WARNING
+### Default Behavior
+Always run auto-review with strict mode (BLOCKING findings trigger Interactive Recovery).
+
+### Exception: --no-review and --lenient flags
+- `--no-review`: Skip auto-review entirely, proceed to STOP
+- `--lenient`: Convert BLOCKING findings to WARNING, proceed to STOP
 
 ### 4.2 Onboarding Message
 ```
@@ -203,7 +206,7 @@ Use --lenient to bypass (converts BLOCKING → WARNING).
 > **YOU MUST invoke the plan-reviewer agent NOW using the Task tool.**
 > This is not optional. Execute this Task tool call immediately.
 
-**EXECUTE IMMEDIATELY - DO NOT SKIP**:
+**EXECUTE IMMEDIATELY**:
 
 ```markdown
 Task:
@@ -289,7 +292,7 @@ WHILE BLOCKING > 0 AND ITERATION <= MAX:
 - [ ] Plan content extracted from conversation
 - [ ] External Service Integration added (if applicable)
 - [ ] Vibe Coding Compliance added
-- [ ] Auto-review completed (unless `--no-review`)
+- [ ] Auto-review completed (or skipped when `--no-review` specified)
 - [ ] Zero BLOCKING (or `--lenient` used)
 - [ ] Execution NOT started
 

@@ -1,7 +1,7 @@
 # System Integration Guide
 
 > **Purpose**: Component interactions, data flow, shared patterns, and integration points
-> **Last Updated**: 2026-01-16 (Updated: external skills sync integration)
+> **Last Updated**: 2026-01-16 (Updated: instruction clarity patterns)
 
 ---
 
@@ -1080,4 +1080,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-16
-**Version**: 3.3.6
+**Version**: 3.3.7
