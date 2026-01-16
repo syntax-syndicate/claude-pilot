@@ -417,6 +417,16 @@ claude-pilot update --apply-statusline
 
 ## Version History
 
+### v3.4.0 (2026-01-16)
+
+- **Plan Detection Fix**: Fixed intermittent "No plan found" errors in /02_execute
+- **MANDATORY ACTION pattern**: Added explicit plan detection step with strong guard language
+- **Step 1 restructure**: Plan Detection (MANDATORY FIRST ACTION) before any other work
+- **Root cause addressed**: Claude reads markdown as prompt, not executable bash script
+- **Guard condition**: "DO NOT say 'no plan found' without actually running these commands"
+- **Updated files**: 02_execute.md (Step 1 added, Step 1.1 renamed from Step 1)
+- **Verification**: All success criteria met (SC-1, SC-2, SC-3)
+
 ### v3.3.7 (2026-01-16)
 
 - **Instruction Clarity Improvement**: Refactored command files for LLM readability
@@ -550,4 +560,4 @@ claude-pilot update --apply-statusline
 ---
 
 **Last Updated**: 2026-01-16
-**Version**: 3.3.7
+**Version**: 3.4.0

@@ -53,11 +53,26 @@ AskUserQuestion:
 - **ALWAYS** provide explicit multi-option choices
 - **ALWAYS** call AskUserQuestion when uncertain about user intent
 
-### /02_execute Command Workflow (Updated 2026-01-15)
+### /02_execute Command Workflow (Updated 2026-01-16)
 
-The `/02_execute` command implements the plan using TDD + Ralph Loop pattern. **Step 1 now includes atomic plan state transition** to prevent duplicate work when multiple pending plans are queued. **Worktree mode includes atomic lock mechanism** (v3.3.4) to prevent race conditions in parallel execution.
+The `/02_execute` command implements the plan using TDD + Ralph Loop pattern. **Step 1 now includes MANDATORY plan detection** to prevent intermittent "No plan found" errors. **Step 1.1 includes atomic plan state transition** to prevent duplicate work when multiple pending plans are queued. **Worktree mode includes atomic lock mechanism** (v3.3.4) to prevent race conditions in parallel execution.
 
-#### Step 1: Plan State Transition (ATOMIC)
+#### Step 1: Plan Detection (MANDATORY FIRST ACTION) - NEW
+
+**Key Change (2026-01-16)**: Added explicit MANDATORY ACTION section to prevent Claude from skipping plan detection.
+
+**Structure**:
+- **MANDATORY ACTION header**: "YOU MUST DO THIS FIRST - NO EXCEPTIONS"
+- **Explicit Bash commands**: Direct `ls` commands for pending/ and in_progress/
+- **Guard condition**: "DO NOT say 'no plan found' without actually running these commands"
+
+**Problem Fixed**:
+- Claude Code reads markdown as prompt, not as executable bash script
+- Bash code blocks in Step 1 were documentation, not automatic execution
+- Claude may skip Step 1 or misinterpret it, jumping to "no plan" conclusion
+- Result: Intermittent false "No plan found" errors even when plans exist
+
+#### Step 1.1: Plan State Transition (ATOMIC)
 
 **Key Change (2026-01-15)**: Plan movement from `pending/` to `in_progress/` is now the **FIRST and ATOMIC operation** before any other work begins.
 
@@ -120,54 +135,59 @@ Execute worktree_a      Execute worktree_b
 
 #### Step Sequence
 
-1. **Step 1: Plan State Transition (ATOMIC)**
-   - 1.1 Worktree Mode (--wt): Atomic move before worktree setup
-   - 1.2 Select and Move Plan (ATOMIC BLOCK): Select + Move + Pointer
+1. **Step 1: Plan Detection (MANDATORY FIRST ACTION)** - NEW (2026-01-16)
+   - Execute Bash commands to find plans in pending/ and in_progress/
+   - MANDATORY ACTION pattern prevents skipping plan detection
+   - Guard condition prevents false "no plan found" errors
+
+2. **Step 1.1: Plan State Transition (ATOMIC)**
+   - 1.1.1 Worktree Mode (--wt): Atomic move before worktree setup
+   - 1.1.2 Select and Move Plan (ATOMIC BLOCK): Select + Move + Pointer
    - Exit immediately if move fails
 
-2. **Step 2: Convert Plan to Todo List**
+3. **Step 2: Convert Plan to Todo List**
    - Extract deliverables, phases, tasks, acceptance criteria
    - Map SC dependencies for parallel execution
 
-3. **Step 2.5: SC Dependency Analysis (For Parallel Execution)**
+4. **Step 2.5: SC Dependency Analysis (For Parallel Execution)**
    - Analyze SC dependencies
    - Group independent SCs
    - Parallel execution pattern with MANDATORY ACTION sections
 
-4. **Step 3: Delegate to Coder Agent (Context Isolation)**
+5. **Step 3: Delegate to Coder Agent (Context Isolation)**
    - MANDATORY ACTION: Invoke Coder Agent via Task tool
    - Token-efficient context isolation (5K vs 110K+ tokens)
 
-5. **Step 3.5: Parallel Verification (Multi-Angle Quality Check)**
+6. **Step 3.5: Parallel Verification (Multi-Angle Quality Check)**
    - MANDATORY ACTION: Invoke Tester + Validator + Code-Reviewer in parallel
    - Tester: Test execution and coverage analysis
    - Validator: Type check, lint, coverage thresholds
    - Code-Reviewer: Deep review for async bugs, memory leaks, security issues
 
-6. **Step 3.6: Review Feedback Loop (Optional Iteration)**
+7. **Step 3.6: Review Feedback Loop (Optional Iteration)**
    - IF critical issues found: Re-invoke Coder or ask user
    - ELSE: Continue to next step
    - Max 3 iterations to prevent infinite loops
 
-7. **Step 4: Execute with TDD (Legacy)**
+8. **Step 4: Execute with TDD (Legacy)**
    - Red-Green-Refactor cycle
    - Ralph Loop integration
 
-8. **Step 5: Ralph Loop (Autonomous Completion)**
+9. **Step 5: Ralph Loop (Autonomous Completion)**
    - Max 7 iterations
    - Verification: tests, type-check, lint, coverage
 
-9. **Step 6: Todo Continuation Enforcement**
-   - Never quit halfway
-   - One `in_progress` at a time
+10. **Step 6: Todo Continuation Enforcement**
+    - Never quit halfway
+    - One `in_progress` at a time
 
-10. **Step 7: Verification**
+11. **Step 7: Verification**
     - Type check, tests, lint
 
-11. **Step 8: Update Plan Artifacts**
+12. **Step 8: Update Plan Artifacts**
     - Add Execution Summary
 
-12. **Step 9: Auto-Chain to Documentation**
+13. **Step 9: Auto-Chain to Documentation**
     - Trigger `/91_document` if all criteria met
 
 ### /03_close Command Workflow (Updated 2026-01-15)
@@ -1080,4 +1100,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-16
-**Version**: 3.3.7
+**Version**: 3.4.0

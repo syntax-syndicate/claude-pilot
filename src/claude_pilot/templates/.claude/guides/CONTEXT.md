@@ -15,8 +15,11 @@ Methodology guides providing detailed explanations of development workflows, pat
 | `3tier-documentation.md` | 3-Tier documentation system | 297 | Documentation: L0-L3 hierarchy |
 | `parallel-execution.md` | Agent orchestration patterns | 565 | Workflow: Parallel agent delegation |
 | `claude-code-standards.md` | Official Claude Code standards | 514 | Reference: Directory structure, conventions |
+| `requirements-tracking.md` | User Requirements Collection methodology | 192 | Planning: Track user requirements verbatim |
+| `requirements-verification.md` | Requirements Verification methodology | 254 | Confirmation: Verify 100% coverage |
+| `instruction-clarity.md` | LLM-readable instruction patterns (NEW) | 271 | Authoring: Clear conditional logic for LLMs |
 
-**Total**: 7 guides, 2346 lines (average: 335 lines per guide)
+**Total**: 10 guides, 3063 lines (average: 306 lines per guide)
 
 ## Common Tasks
 
@@ -40,6 +43,32 @@ Methodology guides providing detailed explanations of development workflows, pat
 ## Success Criteria
 [Measurable acceptance criteria]
 ```
+
+### Collect User Requirements
+- **Task**: Track ALL user requests verbatim to prevent omissions
+- **Guide**: @.claude/guides/requirements-tracking.md
+- **Output**: User Requirements (Verbatim) table with coverage check
+- **Usage**: Used by `/00_plan` command (Step 0)
+
+**Process**:
+1. Collect verbatim input (original language, exact wording)
+2. Assign UR-IDs (UR-1, UR-2, ...)
+3. Build requirements table
+4. Update during conversation
+5. Present in plan summary
+
+### Verify Requirements Coverage
+- **Task**: Verify ALL user requirements are captured in plan
+- **Guide**: @.claude/guides/requirements-verification.md
+- **Output**: Requirements Coverage Check with 100% verification
+- **Usage**: Used by `/01_confirm` command (Step 1.7)
+
+**Process**:
+1. Extract User Requirements (Verbatim) table
+2. Extract Success Criteria from PRP Analysis
+3. Verify 1:1 mapping (UR → SC)
+4. BLOCKING if any requirement missing
+5. Update plan with coverage check
 
 ### Run Gap Detection Review
 - **Task**: Detect gaps in plans involving external services
@@ -130,6 +159,32 @@ Methodology guides providing detailed explanations of development workflows, pat
 - File size limits
 - Cross-reference patterns
 
+### Write Clear Instructions for LLMs
+- **Task**: Ensure LLMs can reliably understand conditional logic
+- **Guide**: @.claude/guides/instruction-clarity.md
+- **Output**: Clear, unambiguous instructions
+- **Usage**: Authoring command files with conditionals
+
+**Key patterns**:
+- Default Behavior First: State default action, then exceptions
+- Positive Framing: "EXECUTE" instead of "DO NOT SKIP"
+- Separate Sections: Default vs Exception in different sections
+- No "unless" in conditional logic
+
+**Before** (confusing):
+```markdown
+**EXECUTE IMMEDIATELY - DO NOT SKIP** (unless `--no-docs` specified):
+```
+
+**After** (clear):
+```markdown
+### Default Behavior
+Always invoke Documenter Agent after plan completion.
+
+### Exception: --no-docs flag
+When `--no-docs` flag is provided, skip this step entirely.
+```
+
 ## Patterns
 
 ### Guide Structure Pattern
@@ -190,10 +245,12 @@ Most guides start with a quick reference table for fast lookup:
 ## Usage by Commands
 
 ### `/00_plan` (Planning)
+- `requirements-tracking.md`: Collect user requirements verbatim
 - `prp-framework.md`: Create SPEC-First plan
 - `parallel-execution.md`: Orchestrate Explorer + Researcher
 
 ### `/01_confirm` (Confirmation)
+- `requirements-verification.md`: Verify 100% requirements coverage
 - `gap-detection.md`: Run gap detection review
 - `parallel-execution.md`: Orchestrate Plan-Reviewer
 
@@ -212,9 +269,12 @@ Most guides start with a quick reference table for fast lookup:
 ## Guide Categories
 
 ### Workflow Guides
+- `requirements-tracking.md`: User Requirements Collection
+- `requirements-verification.md`: Requirements Verification
 - `prp-framework.md`: Requirements methodology
 - `gap-detection.md`: External service review
 - `test-environment.md`: Test framework detection
+- `instruction-clarity.md`: LLM-readable instruction patterns (NEW)
 
 ### Quality Guides
 - `review-checklist.md`: Code review criteria
@@ -237,6 +297,9 @@ Most guides start with a quick reference table for fast lookup:
 4. `review-checklist.md` (258 lines): Ensure completeness
 5. `3tier-documentation.md` (297 lines): Add examples
 6. `parallel-execution.md` (565 lines): Verify patterns (may need splitting)
+7. `requirements-tracking.md` (192 lines): Newly created, good size
+8. `requirements-verification.md` (254 lines): Newly created, good size
+9. `instruction-clarity.md` (271 lines): Newly created, good size (NEW)
 
 **Note**: `claude-code-standards.md` (514 lines) is newly created and comprehensive.
 
@@ -244,9 +307,13 @@ Most guides start with a quick reference table for fast lookup:
 
 ### Planning Workflow
 ```
+requirements-tracking.md (collection)
+       ↓
 prp-framework.md (requirements)
        ↓
 gap-detection.md (review)
+       ↓
+requirements-verification.md (verification)
        ↓
 test-environment.md (setup)
 ```

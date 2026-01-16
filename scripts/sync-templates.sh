@@ -21,7 +21,7 @@ done
 
 # Skills
 echo "2. Syncing skills..."
-for skill in git-master ralph-loop tdd vibe-coding; do
+for skill in git-master ralph-loop tdd vibe-coding documentation-best-practices; do
   mkdir -p "$DEST/skills/${skill}"
   cp "$SOURCE/skills/${skill}/SKILL.md" "$DEST/skills/${skill}/"
   [ -f "$SOURCE/skills/${skill}/REFERENCE.md" ] && \
@@ -51,6 +51,13 @@ cp "$SOURCE/templates/"*.template "$DEST/templates/"
 echo "7. Syncing hooks..."
 mkdir -p "$DEST/scripts/hooks"
 cp "$SOURCE/scripts/hooks/"*.sh "$DEST/scripts/hooks/"
+
+# Utility scripts (statusline.sh, worktree-utils.sh)
+echo "7.5. Syncing utility scripts..."
+cp "$SOURCE/scripts/statusline.sh" "$DEST/scripts/"
+echo "  ✅ statusline.sh"
+cp "$SOURCE/scripts/worktree-utils.sh" "$DEST/scripts/"
+echo "  ✅ worktree-utils.sh"
 
 echo ""
 echo "=== Sync Complete ==="

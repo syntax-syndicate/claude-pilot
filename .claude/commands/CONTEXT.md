@@ -10,14 +10,14 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
 |------|---------|-------|----------------|-------------|
 | `00_plan.md` | Create SPEC-First plan | 355 | Planning | Collect user requirements verbatim, explore codebase, gather requirements, design execution plan through dialogue (read-only) |
 | `01_confirm.md` | Confirm plan + gap detection + requirements verification | 315 | Planning | Review plan, verify requirements coverage (Step 2.7), run gap detection, resolve BLOCKING issues, move to in_progress |
-| `02_execute.md` | Execute with TDD + Ralph Loop | 637 | Execution | Implement features using TDD, atomic lock mechanism (worktree), parallel verification |
+| `02_execute.md` | Execute with TDD + Ralph Loop | 654 | Execution | Plan detection (MANDATORY), atomic lock mechanism (worktree), parallel verification |
 | `03_close.md` | Archive and commit | 325 | Completion | Archive completed plan, worktree cleanup (with error trap), create git commit, safe git push |
 | `90_review.md` | Multi-angle code review | 268 | Quality | Run comprehensive code review with multiple agent perspectives |
 | `91_document.md` | Sync documentation | 288 | Maintenance | Update CLAUDE.md, sync templates, ensure consistency |
 | `92_init.md` | Initialize new project | 209 | Setup | Initialize new project with claude-pilot template |
 | `999_publish.md` | Sync templates + deploy | 222 | Release | Sync templates from upstream, bump version, deploy |
 
-**Total**: 8 commands, 2619 lines (average: 327 lines per command)
+**Total**: 8 commands, 2636 lines (average: 330 lines per command)
 
 ## Common Tasks
 
@@ -51,12 +51,13 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
 - **Command**: `/02_execute [--wt]`
 - **Output**: Feature code with tests, coverage 80%+, verified quality
 - **Process**:
-  1. Plan auto-moves from pending to in_progress (atomic operation)
-  2. **Worktree mode** (`--wt`): Atomic lock prevents race conditions
-  3. Coder Agent executes TDD cycle for each Success Criterion
-  4. Parallel Verification (Step 3.5): Tester + Validator + Code-Reviewer agents
-  5. Review Feedback Loop (Step 3.6): Address critical findings if any
-  6. Ralph Loop iterates until all quality gates pass
+  1. **Step 1: Plan Detection (MANDATORY FIRST ACTION)**: Execute Bash commands to find plans in pending/ and in_progress/
+  2. **Step 1.1: Plan State Transition (ATOMIC)**: Plan auto-moves from pending to in_progress (atomic operation)
+  3. **Worktree mode** (`--wt`): Atomic lock prevents race conditions
+  4. Coder Agent executes TDD cycle for each Success Criterion
+  5. Parallel Verification (Step 3.5): Tester + Validator + Code-Reviewer agents
+  6. Review Feedback Loop (Step 3.6): Address critical findings if any
+  7. Ralph Loop iterates until all quality gates pass
 
 ### Close and Archive
 - **Task**: Archive plan, worktree cleanup, create git commit, safe git push
