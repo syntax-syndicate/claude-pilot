@@ -76,6 +76,54 @@ class TestCheckCodexAuth:
         result = check_codex_auth()
         assert result is False
 
+    def test_codex_auth_malformed_json(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test check_codex_auth() returns False when auth.json is malformed JSON (line 44)."""
+        # Create a mock auth.json with malformed JSON
+        auth_dir = tmp_path / ".codex"
+        auth_dir.mkdir()
+        auth_file = auth_dir / "auth.json"
+        auth_file.write_text('{"tokens": "invalid json')
+
+        # Mock Path.home to return tmp_path
+        monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+
+        result = check_codex_auth()
+        assert result is False
+
+    def test_codex_auth_missing_tokens_key(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test check_codex_auth() returns False when tokens key is missing (line 44)."""
+        # Create a mock auth.json without tokens key
+        auth_dir = tmp_path / ".codex"
+        auth_dir.mkdir()
+        auth_file = auth_dir / "auth.json"
+        auth_file.write_text('{"other_key": "value"}')
+
+        # Mock Path.home to return tmp_path
+        monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+
+        result = check_codex_auth()
+        assert result is False
+
+    def test_codex_auth_invalid_tokens_structure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test check_codex_auth() returns False when tokens is not a dict (line 45)."""
+        # Create a mock auth.json with tokens as string instead of dict
+        auth_dir = tmp_path / ".codex"
+        auth_dir.mkdir()
+        auth_file = auth_dir / "auth.json"
+        auth_file.write_text('{"tokens": "not_a_dict"}')
+
+        # Mock Path.home to return tmp_path
+        monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+
+        result = check_codex_auth()
+        assert result is False
+
 
 class TestSetupCodexMcp:
     """Test setup_codex_mcp() function."""
@@ -168,6 +216,77 @@ class TestSetupCodexMcp:
         # Verify .mcp.json was NOT created
         mcp_file = tmp_path / ".mcp.json"
         assert not mcp_file.exists()
+
+    def test_setup_mcp_malformed_existing(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test setup_codex_mcp() handles malformed existing .mcp.json (TS-8, lines 73-74)."""
+        # Create a malformed .mcp.json
+        existing_mcp = tmp_path / ".mcp.json"
+        existing_mcp.write_text('{"invalid": json}')
+
+        # Mock detect_codex_cli to return True
+        monkeypatch.setattr("claude_pilot.codex.detect_codex_cli", lambda: True)
+
+        # Mock check_codex_auth to return True
+        monkeypatch.setattr("claude_pilot.codex.check_codex_auth", lambda: True)
+
+        # Setup
+        result = setup_codex_mcp(tmp_path)
+
+        assert result is True  # Should succeed and create new config
+
+        # Verify .mcp.json was overwritten with valid config
+        import json
+
+        content = json.loads(existing_mcp.read_text())
+        assert "mcpServers" in content
+        assert "codex" in content["mcpServers"]
+
+    def test_setup_mcp_existing_without_mcp_servers_key(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test setup_codex_mcp() handles .mcp.json without mcpServers key (line 80)."""
+        # Create a .mcp.json with valid JSON but no mcpServers key
+        existing_mcp = tmp_path / ".mcp.json"
+        import json
+
+        existing_mcp.write_text(json.dumps({"other_key": "value"}))
+
+        # Mock detect_codex_cli to return True
+        monkeypatch.setattr("claude_pilot.codex.detect_codex_cli", lambda: True)
+
+        # Mock check_codex_auth to return True
+        monkeypatch.setattr("claude_pilot.codex.check_codex_auth", lambda: True)
+
+        # Setup
+        result = setup_codex_mcp(tmp_path)
+
+        assert result is True  # Should succeed
+
+        # Verify mcpServers key was added
+        content = json.loads(existing_mcp.read_text())
+        assert "mcpServers" in content
+        assert "codex" in content["mcpServers"]
+
+    def test_setup_mcp_write_failure(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test setup_codex_mcp() handles write failure (lines 87-88)."""
+        # Mock detect_codex_cli to return True
+        monkeypatch.setattr("claude_pilot.codex.detect_codex_cli", lambda: True)
+
+        # Mock check_codex_auth to return True
+        monkeypatch.setattr("claude_pilot.codex.check_codex_auth", lambda: True)
+
+        # Create a directory instead of a file to cause write failure
+        mcp_file = tmp_path / ".mcp.json"
+        mcp_file.mkdir()
+
+        # Setup
+        result = setup_codex_mcp(tmp_path)
+
+        assert result is False  # Should fail when can't write
 
 
 class TestDelegatorTemplates:

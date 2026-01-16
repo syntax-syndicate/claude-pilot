@@ -12,19 +12,7 @@ import json
 import shutil
 from pathlib import Path
 
-# Codex MCP configuration
-CODEX_MCP_CONFIG = {
-    "mcpServers": {
-        "codex": {
-            "type": "stdio",
-            "command": "codex",
-            "args": ["-m", "gpt-5.2", "mcp-server"],
-        }
-    }
-}
-
-# Codex authentication file path
-CODEX_AUTH_PATH = ".codex/auth.json"
+from claude_pilot.config import CODEX_AUTH_PATH, CODEX_MCP_CONFIG
 
 
 def detect_codex_cli() -> bool:

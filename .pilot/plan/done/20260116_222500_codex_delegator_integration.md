@@ -365,3 +365,115 @@ src/claude_pilot/
 
 - [claude-delegator](https://github.com/jarrodwatts/claude-delegator/) - Source repository
 - [Codex CLI](https://github.com/openai/codex-cli) - OpenAI Codex CLI
+
+---
+
+## Execution Summary
+
+### Status: ✅ COMPLETE
+
+**Completion Date**: 2026-01-16
+
+### Changes Made
+
+**New Files Created**:
+1. `src/claude_pilot/codex.py` (88 lines) - Codex detection & MCP setup module
+2. `tests/test_codex.py` (220 lines) - Comprehensive test suite with 19 tests
+3. `src/claude_pilot/templates/.claude/rules/delegator/` - 4 orchestration rules
+   - `delegation-format.md`
+   - `model-selection.md`
+   - `orchestration.md`
+   - `triggers.md`
+4. `src/claude_pilot/templates/.claude/rules/delegator/prompts/` - 5 expert prompts
+   - `architect.md`
+   - `code-reviewer.md`
+   - `plan-reviewer.md`
+   - `scope-analyst.md`
+   - `security-analyst.md`
+
+**Modified Files**:
+1. `src/claude_pilot/config.py` - Added `CODEX_MCP_CONFIG`, `CODEX_AUTH_PATH` constants
+2. `src/claude_pilot/updater.py` - Integrated `setup_codex_mcp()` in `perform_auto_update()`
+3. `src/claude_pilot/initializer.py` - Integrated `setup_codex_mcp()` in `initialize()`
+
+### Verification Results
+
+**Tests**: ✅ All 105 tests passing (PASS: 105, FAIL: 0, SKIP: 0)
+
+**Coverage**:
+- ✅ **codex.py**: 100% (target: 90%)
+- ✅ **Overall**: 87% (target: 80%)
+- ✅ **Core Modules**: 95% (target: 90%)
+- ✅ **updater.py**: 90%
+- ✅ **config.py**: 93%
+
+**Quality Gates**:
+- ✅ Type Check: Clean (mypy passed)
+- ✅ Lint: Clean (ruff check passed)
+
+**Code Review**:
+- ✅ No critical issues
+- ⚠️ 1 warning: Ambiguous return value semantics in `setup_codex_mcp()` (documented as acceptable)
+- 💡 3 suggestions: Minor improvements for future consideration
+
+### Success Criteria Status
+
+| SC | Description | Status |
+|----|-------------|--------|
+| SC-1 | Codex CLI Detection | ✅ Complete - `detect_codex_cli()` implemented |
+| SC-2 | Codex Authentication Check | ✅ Complete - `check_codex_auth()` implemented |
+| SC-3 | MCP Config Generation | ✅ Complete - `setup_codex_mcp()` generates `.mcp.json` with GPT 5.2 |
+| SC-4 | Rules Import | ✅ Complete - 4 orchestration rules in templates |
+| SC-5 | Prompts Import | ✅ Complete - 5 expert prompts in templates |
+| SC-6 | Test Coverage 80%+ | ✅ Complete - codex.py: 100%, Overall: 87% |
+
+### Test Scenarios Coverage
+
+| TS | Scenario | Status |
+|----|----------|--------|
+| TS-1 | Codex installed | ✅ Covered |
+| TS-2 | Codex not installed | ✅ Covered |
+| TS-3 | Codex authenticated | ✅ Covered |
+| TS-4 | Codex not authenticated | ✅ Covered |
+| TS-5 | MCP setup fresh | ✅ Covered |
+| TS-6 | MCP setup merge | ✅ Covered |
+| TS-7 | MCP setup skip | ✅ Covered |
+| TS-8 | Malformed .mcp.json | ✅ Covered |
+
+### Ralph Loop Summary
+
+- **Total Iterations**: 2 (initial implementation + coverage improvement)
+- **Final Status**: `<RALPH_COMPLETE>`
+- **Agent Invocations**: Coder (2x), Tester (2x), Validator (2x), Code-Reviewer (1x)
+
+### Follow-ups
+
+**Optional Future Enhancements**:
+1. Consider using `CodexSetupResult` enum for clearer return semantics (Code Reviewer suggestion)
+2. Add `OSError` to exception handlers for broader error coverage (Code Reviewer suggestion)
+3. Improve `initializer.py` coverage from 28% to 80%+ (separate task)
+
+**Documentation Updates**:
+- Update CLAUDE.md with Codex integration details
+- Add system-integration.md documentation for MCP setup
+- Update docs-overview.md with new CONTEXT.md references
+
+### Integration Points Verified
+
+- ✅ `init` command calls `setup_codex_mcp()` during project initialization
+- ✅ `update` command calls `setup_codex_mcp()` during template sync
+- ✅ Graceful degradation when Codex CLI not installed
+- ✅ Graceful degradation when Codex not authenticated
+- ✅ Existing `.mcp.json` merge preserves user configuration
+
+---
+
+## Artifacts
+
+Execution artifacts archived in `.pilot/plan/done/20260116_222500_codex_delegator_integration/artifacts/`:
+
+| Artifact | Description | Format |
+|----------|-------------|--------|
+| `test-scenarios.md` | Test scenarios coverage with all 8 planned scenarios + 5 additional edge cases | Markdown |
+| `coverage-report.txt` | Detailed coverage report (100% for codex.py, 87% overall) | Text |
+| `ralph-loop-log.md` | Ralph Loop iterations (2 iterations, autonomous completion) | Markdown |

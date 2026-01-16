@@ -108,6 +108,20 @@ EXTERNAL_SKILLS: dict[str, dict[str, str]] = {
 EXTERNAL_SKILLS_DIR = ".claude/skills/external"
 EXTERNAL_SKILLS_VERSION_FILE = ".claude/.external-skills-version"
 
+# Codex MCP configuration
+CODEX_MCP_CONFIG = {
+    "mcpServers": {
+        "codex": {
+            "type": "stdio",
+            "command": "codex",
+            "args": ["-m", "gpt-5.2", "mcp-server"],
+        }
+    }
+}
+
+# Codex authentication file path
+CODEX_AUTH_PATH = ".codex/auth.json"
+
 
 def get_target_dir() -> Path:
     """

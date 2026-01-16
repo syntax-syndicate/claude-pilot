@@ -11,7 +11,7 @@
 Framework: Python CLI Tool
 Language: Python 3.10+
 Package Manager: Poetry/pip
-Version: 3.3.1
+Version: 3.4.0
 Deployment: PyPI package distribution
 ```
 
@@ -573,4 +573,4 @@ claude-pilot update --apply-statusline
 ---
 
 **Last Updated**: 2026-01-16
-**Version**: 3.4.0 (Codex integration)
+**Version**: 3.4.0 (Codex Delegator Integration)

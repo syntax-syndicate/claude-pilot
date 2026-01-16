@@ -1,7 +1,7 @@
 # System Integration Guide
 
 > **Purpose**: Component interactions, data flow, shared patterns, and integration points
-> **Last Updated**: 2026-01-16 (Updated: instruction clarity patterns)
+> **Last Updated**: 2026-01-16 (Updated: Codex Delegator Integration)
 
 ---
 
@@ -1246,4 +1246,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-16
-**Version**: 3.4.0 (Codex integration)
+**Version**: 3.4.0 (Codex Delegator Integration)
