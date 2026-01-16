@@ -26,7 +26,22 @@ WORKTREE_UTILS=".claude/scripts/worktree-utils.sh"
 
 ---
 
-## Step 1: Plan State Transition (ATOMIC)
+## Step 1: Plan Detection (MANDATORY FIRST ACTION)
+
+> **🚨 YOU MUST DO THIS FIRST - NO EXCEPTIONS**
+> Before ANY other action, execute these Bash commands to find the plan:
+
+```bash
+ls -la .pilot/plan/pending/*.md 2>/dev/null
+ls -la .pilot/plan/in_progress/*.md 2>/dev/null
+```
+
+> **ONLY proceed if you have confirmed a plan exists.**
+> **DO NOT say "no plan found" without actually running these commands.**
+
+---
+
+### Step 1.1: Plan State Transition (ATOMIC)
 
 > **🚨 CRITICAL - BLOCKING OPERATION**: MUST complete successfully BEFORE any other work. If fails, EXIT IMMEDIATELY.
 

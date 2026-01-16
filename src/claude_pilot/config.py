@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 # Version information
-VERSION = "3.4.0"
+VERSION = "4.0.0"
 VERSION_FILE = ".claude/.pilot-version"
 
 # Remote repository URLs
