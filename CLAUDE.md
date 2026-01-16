@@ -39,7 +39,8 @@ Deployment: [e.g., Vercel, AWS, Docker]
 
 | Task | Command | Description |
 |------|---------|-------------|
-| Create plan | `/00_plan` | Generate SPEC-First plan |
+| Create plan | `/00_plan` | Generate SPEC-First plan (with User Requirements Collection) |
+| Confirm plan | `/01_confirm` | Review plan + Requirements Verification |
 | Execute work | `/02_execute` | Implement with TDD |
 | Review code | `/90_review` | Multi-angle analysis |
 | Update docs | `/91_document` | Auto-sync documentation |
@@ -59,14 +60,16 @@ project-root/
 │   │   ├── 03_close.md     # Close & archive
 │   │   ├── 90_review.md    # Review code
 │   │   └── 91_document.md  # Update docs
-│   ├── guides/             # Methodology guides (7)
+│   ├── guides/             # Methodology guides (9)
 │   │   ├── claude-code-standards.md  # Official Claude Code standards (NEW)
 │   │   ├── prp-framework.md          # Problem-Requirements-Plan
 │   │   ├── gap-detection.md          # External service verification
 │   │   ├── parallel-execution.md     # Parallel execution patterns
 │   │   ├── 3tier-documentation.md    # Documentation system
 │   │   ├── review-checklist.md       # Code review criteria
-│   │   └── test-environment.md       # Test framework detection
+│   │   ├── test-environment.md       # Test framework detection
+│   │   ├── requirements-tracking.md  # User Requirements Collection (NEW)
+│   │   └── requirements-verification.md # Requirements Verification (NEW)
 │   ├── skills/             # Reusable skill modules (5)
 │   │   ├── documentation-best-practices/  # Documentation standards (NEW)
 │   │   ├── tdd/SKILL.md (+ REFERENCE.md)

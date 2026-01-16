@@ -32,7 +32,7 @@ claude-pilot/
 │   │   ├── 91_document.md  # Update docs
 │   │   ├── 92_init.md      # Initialize 3-Tier docs
 │   │   └── 999_publish.md  # Publish to npm
-│   ├── guides/             # Methodology guides (7)
+│   ├── guides/             # Methodology guides (9)
 │   │   ├── CONTEXT.md      # Guide folder context (NEW)
 │   │   ├── claude-code-standards.md  # Official Claude Code standards (NEW)
 │   │   ├── prp-framework.md          # Problem-Requirements-Plan
@@ -40,7 +40,9 @@ claude-pilot/
 │   │   ├── parallel-execution.md     # Parallel execution patterns
 │   │   ├── 3tier-documentation.md    # Documentation system
 │   │   ├── review-checklist.md       # Code review criteria
-│   │   └── test-environment.md       # Test framework detection
+│   │   ├── test-environment.md       # Test framework detection
+│   │   ├── requirements-tracking.md  # User Requirements Collection (NEW)
+│   │   └── requirements-verification.md # Requirements Verification (NEW)
 │   ├── templates/          # PRP, CONTEXT, SKILL templates
 │   │   ├── gap-checklist.md
 │   │   ├── CONTEXT-tier2.md.template
@@ -416,6 +418,11 @@ claude-pilot update --apply-statusline
 
 ### v3.3.6 (2026-01-16)
 
+- **User Requirements Tracking & Verification**: Added UR collection to /00_plan, verification to /01_confirm
+- **New guides**: requirements-tracking.md (192 lines), requirements-verification.md (254 lines)
+- **Enhanced /00_plan**: Step 0 (User Requirements Collection) with verbatim recording
+- **Enhanced /01_confirm**: Step 2.7 (Requirements Verification) with BLOCKING condition
+- **Code review fixes**: File length reduction, nested checkboxes, step numbering normalized
 - **External Skills Sync**: GitHub API integration for Vercel agent-skills
 - **New flag**: `--skip-external-skills` for init/update commands
 - **New functions**: sync_external_skills(), get_github_latest_sha(), download_github_tarball(), extract_skills_from_tarball()

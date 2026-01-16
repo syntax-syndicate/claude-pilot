@@ -179,10 +179,10 @@ Feature-level implementation details for specific features or deeply nested impl
 
 | Location | Status | Notes |
 |----------|--------|-------|
-| `.claude/commands/CONTEXT.md` | Not created | Should document 6 command files |
-| `.claude/guides/CONTEXT.md` | Not created | Should document 8 guide files |
-| `.claude/skills/CONTEXT.md` | Not created | Should document 4 skill modules |
-| `.claude/agents/CONTEXT.md` | Not created | Should document 4 agent configs |
+| `.claude/commands/CONTEXT.md` | Created | Documents 8 command files |
+| `.claude/guides/CONTEXT.md` | Created | Documents 9 guide files |
+| `.claude/skills/CONTEXT.md` | Created | Documents 4 skill modules |
+| `.claude/agents/CONTEXT.md` | Created | Documents 4 agent configs |
 
 ### To Create
 

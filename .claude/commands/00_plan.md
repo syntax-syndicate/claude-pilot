@@ -94,7 +94,30 @@ Existing Patterns: [list]
 
 ---
 
-## Step 0: Parallel Exploration
+## Step 0: User Requirements Collection
+
+> **Full methodology**: See @.claude/guides/requirements-tracking.md
+
+> **Purpose**: Track ALL user requests verbatim to prevent omissions during long conversations
+
+### 🎯 MANDATORY ACTION: Collect Requirements Immediately
+
+> **YOU MUST collect user requirements BEFORE starting exploration.**
+> This prevents requirements mentioned early in conversation from being forgotten.
+
+**Quick Start**:
+1. Collect verbatim input (original language, exact wording)
+2. Assign UR-IDs (UR-1, UR-2, ...)
+3. Build requirements table (see guide for template)
+4. Update during conversation
+5. Present in plan summary
+
+> **⚠️ CRITICAL**: Do NOT start Step 1 until requirements table is created.
+> This ensures ALL user input is captured before exploration begins.
+
+---
+
+## Step 1: Parallel Exploration
 
 **Full details**: See @.claude/guides/parallel-execution.md - Pattern 1: Parallel Exploration
 
@@ -130,11 +153,11 @@ After parallel agents complete:
 > - Discovered dependencies
 > - Warnings & gotchas
 > - Key decisions made
-> **See**: Step 0.5 for execution context template
+> **See**: Step 2 for execution context template
 
 ---
 
-## Step 0.5: Compile Execution Context
+## Step 2: Compile Execution Context
 
 > **Purpose**: Transfer planner's discoveries to executor without re-exploration
 
@@ -152,7 +175,7 @@ Collect these tables during exploration (becomes "Execution Context (Planner Han
 
 ---
 
-## Step 1: Requirements Elicitation
+## Step 3: Requirements Elicitation
 
 Ask clarifying questions:
 1. **[Scope]**: Boundaries?
@@ -163,7 +186,7 @@ Ask clarifying questions:
 
 ---
 
-## Step 2: PRP Definition
+## Step 4: PRP Definition
 
 **PRP Framework**: See @.claude/guides/prp-framework.md
 
@@ -198,7 +221,7 @@ Time, Technical, Resource limits
 
 ---
 
-## Step 2.5: External Service Integration (Conditional)
+## Step 5: External Service Integration (Conditional)
 
 > **⚠️ Include ONLY when plan involves**: API calls, DB operations, file operations, async, environment variables
 
@@ -214,7 +237,7 @@ Time, Technical, Resource limits
 
 ---
 
-## Step 3: Architecture & Design
+## Step 6: Architecture & Design
 
 **Vibe Coding Guidelines**: See @.claude/skills/vibe-coding/SKILL.md
 
@@ -228,14 +251,19 @@ Time, Technical, Resource limits
 
 ---
 
-## Step 4: Present Plan Summary
+## Step 7: Present Plan Summary
 
 ### Plan Structure
 ```markdown
 # {Work Name}
 - Generated: {timestamp} | Work: {work_name}
 
-## User Requirements
+## User Requirements (Verbatim)
+> From Step 0: Complete table with all user input
+
+### Requirements Coverage Check
+> From Step 0: Verification that all URs mapped to SCs
+
 ## PRP Analysis (What/Why/How/Success Criteria/Constraints)
 ## Scope
 ## Test Environment (Detected)
@@ -268,11 +296,39 @@ Time, Technical, Resource limits
 
 ## Success Criteria
 
-- [ ] Parallel exploration executed
-- [ ] Requirements in PRP format
-- [ ] Test scenarios defined
-- [ ] Architecture documented
-- [ ] User approved, ready for `/01_confirm`
+- [ ] Step 0: User Requirements Collection completed
+  - [ ] All user input recorded verbatim in table
+  - [ ] Each requirement assigned UR-ID (UR-1, UR-2, ...)
+  - [ ] Requirements Coverage Check table created
+- [ ] Step 1: Parallel exploration executed
+  - [ ] Explorer agent completed (files, patterns)
+  - [ ] Researcher agent completed (external docs)
+  - [ ] Test environment detected
+- [ ] Step 2: Execution Context compiled
+  - [ ] Explored Files table created
+  - [ ] Key Decisions documented
+  - [ ] Implementation Patterns extracted
+- [ ] Step 3: Requirements elicitation completed
+  - [ ] Scope boundaries clarified
+  - [ ] Constraints identified
+  - [ ] Priorities established
+- [ ] Step 4: PRP Analysis defined
+  - [ ] What (Functionality) documented
+  - [ ] Why (Context) with business value
+  - [ ] How (Approach) with phases
+  - [ ] Success Criteria with verify commands
+- [ ] Step 5: External Service Integration (if applicable)
+  - [ ] API Calls table completed
+  - [ ] Environment Variables documented
+  - [ ] Error Handling Strategy defined
+- [ ] Step 6: Architecture documented
+  - [ ] Data structures defined
+  - [ ] Module boundaries identified
+  - [ ] Risks & Alternatives analyzed
+- [ ] Step 7: Plan Summary presented
+  - [ ] User Requirements (Verbatim) included
+  - [ ] Requirements Coverage Check shows 100%
+  - [ ] User approved, ready for `/01_confirm`
 
 ---
 
@@ -291,6 +347,7 @@ Create    Review      Execute      Archive
 ---
 
 ## Related Guides
+- @.claude/guides/requirements-tracking.md - User Requirements Collection methodology
 - @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition
 - @.claude/guides/test-environment.md - Test framework detection
 - @.claude/skills/vibe-coding/SKILL.md - Code quality standards

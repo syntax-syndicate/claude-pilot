@@ -87,6 +87,30 @@ If conversation contains no code examples, syntax patterns, or diagrams:
 
 ---
 
+## Step 1.7: Requirements Verification
+
+> **Full methodology**: See @.claude/guides/requirements-verification.md
+
+> **Purpose**: Verify ALL user requirements are captured in the plan
+> **Location**: After Conversation Highlights extraction, before file creation
+
+### 🎯 MANDATORY ACTION: Verify Requirements Coverage
+
+> **YOU MUST verify that ALL User Requirements from /00_plan are included in the plan.**
+> This prevents omissions during plan extraction.
+
+**Quick Start**:
+1. Extract User Requirements (Verbatim) table (UR-1, UR-2, ...)
+2. Extract Success Criteria from PRP Analysis (SC-1, SC-2, ...)
+3. Verify 1:1 mapping (UR → SC)
+4. BLOCKING if any requirement missing
+5. Update plan with Requirements Coverage Check
+
+> **⚠️ CRITICAL**: Do NOT proceed to Step 2 if BLOCKING findings exist.
+> Use AskUserQuestion to resolve ALL BLOCKING issues before plan file creation.
+
+---
+
 ## Step 2: Generate Plan File Name
 
 ```bash
@@ -111,7 +135,12 @@ PLAN_FILE="$PROJECT_ROOT/.pilot/plan/pending/${TS}_${WORK_NAME}.md"
 # {Work Name}
 - Generated: {timestamp} | Work: {work_name} | Location: {plan_path}
 
-## User Requirements
+## User Requirements (Verbatim)
+> From /00_plan Step 0: Complete table with all user input
+
+### Requirements Coverage Check
+> From Step 1.7: Verification that all URs mapped to SCs
+
 ## PRP Analysis (What/Why/How/Success Criteria/Constraints)
 ## Scope
 ## Test Environment (Detected)
@@ -253,6 +282,10 @@ WHILE BLOCKING > 0 AND ITERATION <= MAX:
 ## Success Criteria
 
 - [ ] Plan file created in `.pilot/plan/pending/`
+- [ ] User Requirements (Verbatim) section included in plan
+- [ ] Requirements Coverage Check completed (Step 1.7)
+- [ ] All user requirements mapped to Success Criteria (100% coverage)
+- [ ] BLOCKING findings resolved (or `--lenient` used)
 - [ ] Plan content extracted from conversation
 - [ ] External Service Integration added (if applicable)
 - [ ] Vibe Coding Compliance added
@@ -270,6 +303,7 @@ WHILE BLOCKING > 0 AND ITERATION <= MAX:
 ---
 
 ## Related Guides
+- @.claude/guides/requirements-verification.md - Requirements Verification methodology
 - @.claude/guides/prp-framework.md - Problem-Requirements-Plan definition
 - @.claude/skills/vibe-coding/SKILL.md - Code quality standards
 - @.claude/guides/gap-detection.md - External service verification

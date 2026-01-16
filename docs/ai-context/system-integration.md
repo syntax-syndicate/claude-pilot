@@ -340,9 +340,87 @@ EXTERNAL_SKILLS_VERSION_FILE = ".claude/.external-skills-version"
 
 ---
 
-## /01_confirm Command Workflow
+## /00_plan Command Workflow (Updated 2026-01-16)
 
-The `/01_confirm` command extracts the plan from the `/00_plan` conversation and creates a plan file in `.pilot/plan/pending/`.
+The `/00_plan` command generates SPEC-First plans with **User Requirements Collection (Step 0)** to prevent omissions.
+
+### Step Sequence
+
+1. **Step 0: User Requirements Collection** (NEW)
+   - Collect verbatim input (original language, exact wording)
+   - Assign UR-IDs (UR-1, UR-2, UR-3, ...)
+   - Build User Requirements (Verbatim) table
+   - Update during conversation as new requirements emerge
+   - Requirements Coverage Check table for 100% tracking
+
+2. **Step 1: Parallel Exploration**
+   - Explorer Agent (Haiku): Codebase exploration
+   - Researcher Agent (Haiku): External docs research
+   - Send in same message for true parallelism
+
+3. **Step 2: Compile Execution Context**
+   - Explored Files table
+   - Key Decisions Made table
+   - Implementation Patterns (FROM CONVERSATION)
+
+4. **Step 3: Requirements Elicitation**
+   - PRP Analysis (What, Why, How, Success Criteria, Constraints)
+   - Map user requirements to success criteria
+
+5. **Step 4: PRP Definition**
+   - Define scope, architecture, execution plan
+   - Acceptance criteria, test plan
+
+6. **Step 5: External Service Integration** (if applicable)
+   - API Calls Required table
+   - Environment Variables Required table
+   - Error Handling Strategy
+
+7. **Step 6: Architecture & Design**
+   - Architecture diagrams
+   - Vibe Coding compliance check
+
+8. **Step 7: Present Plan Summary**
+   - Include User Requirements (Verbatim) section
+   - Requirements Coverage Check table
+   - AskUserQuestion for next action
+
+### User Requirements (Verbatim) Template
+
+```markdown
+## User Requirements (Verbatim)
+
+> **Purpose**: Track ALL user requests verbatim to prevent omissions
+
+| ID | User Input (Original) | Summary |
+|----|----------------------|---------|
+| UR-1 | "00_plan 이 바로 시작되는 이슈" | Phase boundary violation prevention |
+| UR-2 | "03_close에 git push" | Add git push to 03_close |
+| UR-3 | "검증 단계 추가해줘" | Add verification step |
+
+### Requirements Coverage Check
+
+| Requirement | In Scope? | Success Criteria | Status |
+|-------------|-----------|------------------|--------|
+| UR-1 | ✅ | SC-1, SC-2 | Mapped |
+| UR-2 | ✅ | SC-3 | Mapped |
+| UR-3 | ✅ | SC-4 | Mapped |
+| **Coverage** | 100% | All requirements mapped | ✅ |
+```
+
+### Integration Points
+
+| Component | Integration | Data Flow |
+|-----------|-------------|-----------|
+| `/00_plan` Step 0 | Creates UR table | → Plan file |
+| `/00_plan` Step 7 | Presents summary | → User review |
+| `/01_confirm` Step 2.7 | Verifies coverage | → BLOCKING if missing |
+
+---
+
+## /01_confirm Command Workflow (Updated 2026-01-16)
+
+The `/01_confirm` command extracts the plan from the `/00_plan` conversation, creates a plan file, and **verifies 100% requirements coverage**.
 
 #### Step Sequence
 
@@ -350,7 +428,7 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation and
    - Review context for requirements, scope, architecture, execution plan
    - Validate completeness (User Requirements, Execution Plan, Acceptance Criteria, Test Plan)
 
-2. **Step 1.5: Conversation Highlights Extraction** (NEW)
+2. **Step 1.5: Conversation Highlights Extraction**
    - Extract code examples (fenced code blocks)
    - Extract syntax patterns (CLI commands, API patterns)
    - Extract architecture diagrams (ASCII art, Mermaid charts)
@@ -360,12 +438,20 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation and
 3. **Step 2: Generate Plan File Name**
    - Create timestamped filename: `YYYYMMDD_HHMMSS_{work_name}.md`
 
-4. **Step 3: Create Plan File**
+4. **Step 2.7: Requirements Verification** (NEW)
+   - Extract User Requirements (Verbatim) table
+   - Extract Success Criteria from PRP Analysis
+   - Verify 1:1 mapping (UR → SC)
+   - BLOCKING if any requirement missing
+   - Update plan with Requirements Coverage Check
+
+5. **Step 3: Create Plan File**
    - Use plan template structure
    - Include Execution Context with Implementation Patterns
+   - Include User Requirements (Verbatim) section
    - Add External Service Integration (if applicable)
 
-5. **Step 4: Auto-Review**
+6. **Step 4: Auto-Review**
    - Run Gap Detection Review (unless `--no-review`)
    - Interactive Recovery for BLOCKING findings
    - Support `--lenient` flag to bypass BLOCKING
@@ -376,7 +462,13 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation and
 # {Work Name}
 - Generated: {timestamp} | Work: {work_name} | Location: {plan_path}
 
-## User Requirements
+## User Requirements (Verbatim)  <-- Step 0 output
+| ID | User Input (Original) | Summary |
+|----|----------------------|---------|
+
+### Requirements Coverage Check  <-- Step 2.7 output
+| Requirement | In Scope? | Success Criteria | Status |
+
 ## PRP Analysis (What/Why/How/Success Criteria/Constraints)
 ## Scope
 ## Test Environment (Detected)
@@ -392,13 +484,17 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation and
 ## Test Plan
 ## Risks & Mitigations
 ## Open Questions
+## Review History
+## Execution Summary
 ```
 
 #### Integration Points
 
 | Component | Integration | Data Flow |
 |-----------|-------------|-----------|
-| `/00_plan` | Produces conversation | → `/01_confirm` extracts |
+| `/00_plan` Step 0 | Creates UR table | → Plan User Requirements (Verbatim) |
+| `/00_plan` Step 7 | Presents summary | → `/01_confirm` extracts |
+| `/01_confirm` Step 2.7 | Verifies coverage | → Requirements Coverage Check (BLOCKING if missing) |
 | `/01_confirm` | Creates plan file | → `.pilot/plan/pending/` |
 | `/01_confirm` Step 1.5 | Extracts highlights | → Plan Implementation Patterns |
 | Gap Detection | Reviews external services | → Interactive Recovery |

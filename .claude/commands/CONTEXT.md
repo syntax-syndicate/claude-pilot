@@ -8,8 +8,8 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
 
 | File | Purpose | Lines | Workflow Phase | Description |
 |------|---------|-------|----------------|-------------|
-| `00_plan.md` | Create SPEC-First plan | 298 | Planning | Explore codebase, gather requirements, design execution plan through dialogue (read-only) |
-| `01_confirm.md` | Confirm plan + gap detection | 281 | Planning | Review plan, run gap detection, resolve BLOCKING issues, move to in_progress |
+| `00_plan.md` | Create SPEC-First plan | 355 | Planning | Collect user requirements verbatim, explore codebase, gather requirements, design execution plan through dialogue (read-only) |
+| `01_confirm.md` | Confirm plan + gap detection + requirements verification | 315 | Planning | Review plan, verify requirements coverage (Step 2.7), run gap detection, resolve BLOCKING issues, move to in_progress |
 | `02_execute.md` | Execute with TDD + Ralph Loop | 637 | Execution | Implement features using TDD, atomic lock mechanism (worktree), parallel verification |
 | `03_close.md` | Archive and commit | 325 | Completion | Archive completed plan, worktree cleanup (with error trap), create git commit, safe git push |
 | `90_review.md` | Multi-angle code review | 268 | Quality | Run comprehensive code review with multiple agent perspectives |
@@ -17,30 +17,34 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
 | `92_init.md` | Initialize new project | 209 | Setup | Initialize new project with claude-pilot template |
 | `999_publish.md` | Sync templates + deploy | 222 | Release | Sync templates from upstream, bump version, deploy |
 
-**Total**: 8 commands, 2528 lines (average: 316 lines per command)
+**Total**: 8 commands, 2619 lines (average: 327 lines per command)
 
 ## Common Tasks
 
 ### Create a Plan
-- **Task**: Generate SPEC-First plan from user request
+- **Task**: Generate SPEC-First plan from user request with User Requirements Collection
 - **Command**: `/00_plan "implement user authentication"`
 - **Output**: Plan file saved to `.pilot/plan/pending/{timestamp}_{work}_{topic}.md`
 - **Process**:
-  1. Explorer and Researcher agents explore codebase and external docs (parallel)
-  2. Plan-Reviewer agent creates SPEC-First plan
-  3. Plan saved to pending directory
-  4. User reviews plan
+  1. Step 0: Collect user requirements verbatim (UR-1, UR-2, ...)
+  2. Step 1: Explorer and Researcher agents explore codebase and external docs (parallel)
+  3. Step 2-6: Plan-Reviewer agent creates SPEC-First plan
+  4. Step 7: Present plan summary with User Requirements (Verbatim) section
+  5. User reviews plan
 
 ### Confirm a Plan
-- **Task**: Review plan, detect gaps, resolve BLOCKING issues
+- **Task**: Review plan, verify requirements coverage, detect gaps, resolve BLOCKING issues
 - **Command**: `/01_confirm`
 - **Output**: Plan moved to `.pilot/plan/in_progress/`
 - **Process**:
-  1. Plan-Reviewer agent runs gap detection review
-  2. BLOCKING findings trigger Interactive Recovery (dialogue)
-  3. User provides missing details
-  4. Plan updated until BLOCKING = 0
-  5. Plan moved to in_progress
+  1. Extract plan from conversation
+  2. Step 2.7: Verify 100% requirements coverage (UR → SC mapping)
+  3. BLOCKING if any requirement missing
+  4. Plan-Reviewer agent runs gap detection review
+  5. BLOCKING findings trigger Interactive Recovery (dialogue)
+  6. User provides missing details
+  7. Plan updated until BLOCKING = 0
+  8. Plan moved to in_progress
 
 ### Execute Implementation
 - **Task**: Implement features using TDD + Ralph Loop + Parallel Verification
@@ -112,9 +116,9 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
 ```
 User Request
        ↓
-/00_plan → .pilot/plan/pending/
+/00_plan (Step 0: Collect URs verbatim)
        ↓
-/01_confirm → .pilot/plan/in_progress/
+/01_confirm (Step 2.7: Verify 100% coverage)
        ↓
 /02_execute → Implementation (code + tests)
        ↓
@@ -242,6 +246,8 @@ allowed-tools: Read, Glob, Grep, Edit, Write, Bash(*), AskUserQuestion, Task
 ## See Also
 
 **Workflow guides**:
+- @.claude/guides/requirements-tracking.md - User Requirements Collection methodology
+- @.claude/guides/requirements-verification.md - Requirements Verification methodology
 - @.claude/guides/prp-framework.md - SPEC-First requirements methodology
 - @.claude/guides/gap-detection.md - Gap detection review for external services
 - @.claude/guides/parallel-execution.md - Agent orchestration patterns
