@@ -1,7 +1,7 @@
 # Project Structure Guide
 
 > **Purpose**: Technology stack, directory layout, and key files
-> **Last Updated**: 2026-01-16 (Updated: external skills sync)
+> **Last Updated**: 2026-01-17 (Updated: GPT Expert Integration)
 
 ---
 
@@ -573,4 +573,4 @@ claude-pilot update --apply-statusline
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.3 (Codex Delegator Integration)
+**Version**: 4.0.3 (GPT Expert Integration with Commands and Agents)

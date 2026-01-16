@@ -93,7 +93,7 @@ Specialized agents with distinct capabilities, model allocations, and tool acces
 **Why Haiku**: Deterministic checks, no reasoning required.
 
 ### Review Plans and Detect Gaps
-- **Task**: Analyze plans and detect gaps
+- **Task**: Analyze plans and detect gaps with GPT Plan Reviewer option
 - **Agent**: @.claude/agents/plan-reviewer.md (sonnet)
 - **Tools**: Read, Glob, Grep
 - **Usage**: `/01_confirm` command
@@ -104,10 +104,16 @@ Specialized agents with distinct capabilities, model allocations, and tool acces
 - Verify success criteria
 - Identify missing requirements
 
+**GPT Plan Reviewer Delegation** (Step 5):
+- **Trigger**: Large plans (5+ Success Criteria)
+- **Expert**: GPT Plan Reviewer via `codex-sync.sh`
+- **Action**: Delegates for comprehensive plan validation
+- **Fallback**: Claude-only review if Codex not installed
+
 **Why Sonnet**: Analysis requires moderate reasoning.
 
 ### Deep Code Review
-- **Task**: Deep analysis for critical issues
+- **Task**: Deep analysis for critical issues with GPT Security Analyst option
 - **Agent**: @.claude/agents/code-reviewer.md (opus)
 - **Tools**: Read, Glob, Grep, Bash
 - **Usage**: `/90_review` command (parallel verification)
@@ -117,6 +123,12 @@ Specialized agents with distinct capabilities, model allocations, and tool acces
 - Memory leak analysis
 - Performance issue identification
 - Security vulnerability scanning
+
+**GPT Security Analyst Delegation** (Step 6):
+- **Trigger**: Security-related code detected (auth, crypto, input validation, etc.)
+- **Expert**: GPT Security Analyst via `codex-sync.sh`
+- **Action**: Delegates for threat modeling, vulnerability assessment
+- **Fallback**: Claude-only review if Codex not installed
 
 **Why Opus**: Critical issues require deepest reasoning. High cost justified for quality.
 

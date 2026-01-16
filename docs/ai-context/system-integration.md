@@ -1,7 +1,7 @@
 # System Integration Guide
 
 > **Purpose**: Component interactions, data flow, shared patterns, and integration points
-> **Last Updated**: 2026-01-16 (Updated: Codex Delegator Integration)
+> **Last Updated**: 2026-01-17 (Updated: GPT Expert Integration with Commands and Agents)
 
 ---
 
@@ -376,61 +376,80 @@ The Codex delegator integration provides optional GPT expert delegation via `cod
 | `templates/.claude/rules/delegator/*` | 4 orchestration rules (delegation-format, model-selection, orchestration, triggers) |
 | `templates/.claude/rules/delegator/prompts/*` | 5 GPT expert prompts (architect, code-reviewer, plan-reviewer, scope-analyst, security-analyst) |
 
-### Codex Detection & Setup Workflow
+### Codex Integration Flow
+
+**IMPORTANT**: The Codex integration uses a **Bash script wrapper** (`codex-sync.sh`), **NOT** an MCP server. The MCP server approach has been deprecated.
 
 ```
-User runs: claude-pilot init/update
+User Request (Complex Analysis)
       │
-      ├─► 1. Detect Codex CLI (shutil.which("codex"))
-      │   └─► Not found → Skip (silent)
+      ├─► Trigger Detection (rules/delegator/triggers.md)
+      │   ├─► Explicit: "ask GPT", "security review"
+      │   └─► Automatic: Security code, 2+ failed fixes, architecture
       │
-      ├─► 2. Check Codex Auth (~/.codex/auth.json)
-      │   └─► No valid tokens → Skip (silent)
+      ├─► Expert Selection
+      │   ├─► Architect: System design, tradeoffs
+      │   ├─► Security Analyst: Vulnerabilities, threats
+      │   ├─► Code Reviewer: Code quality, bugs
+      │   ├─► Plan Reviewer: Plan validation
+      │   └─► Scope Analyst: Requirements analysis
       │
-      ├─► 3. Read existing .mcp.json (or create new)
-      │   └─► Parse JSON, validate structure
+      ├─► Delegation (codex-sync.sh)
+      │   ├─► Mode: read-only (Advisory) or workspace-write (Implementation)
+      │   ├─► Prompt: 7-section format with expert instructions
+      │   └─► Command: .claude/scripts/codex-sync.sh "<mode>" "<prompt>"
       │
-      ├─► 4. Merge Codex MCP config
-      │   └─► Add mcpServers.codex with GPT 5.2 model
-      │
-      └─► 5. Write .mcp.json atomically
-          └─► Return success/failure
+      └─► Response Handling
+          ├─► Synthesize insights
+          ├─► Apply judgment
+          └─► Verify implementation (if applicable)
 ```
 
-### Codex MCP Configuration
+### Delegation Script (codex-sync.sh)
 
-Generated `.mcp.json` structure:
-```json
-{
-  "mcpServers": {
-    "codex": {
-      "type": "stdio",
-      "command": "codex",
-      "args": ["-m", "gpt-5.2", "mcp-server"]
-    }
-  }
-}
+**Location**: `.claude/scripts/codex-sync.sh`
+
+**Usage**:
+```bash
+.claude/scripts/codex-sync.sh "<mode>" "<delegation_prompt>"
+
+# Parameters:
+# - mode: "read-only" (Advisory) or "workspace-write" (Implementation)
+# - delegation_prompt: 7-section prompt with expert instructions
+
+# Example (Advisory):
+.claude/scripts/codex-sync.sh "read-only" "You are a software architect...
+TASK: Analyze tradeoffs between Redis and in-memory caching.
+EXPECTED OUTCOME: Clear recommendation with rationale.
+CONTEXT: [user's situation, full details]
+..."
 ```
 
-**Key Features**:
-- **Model**: GPT 5.2 (NOT gpt-5.2-codex)
-- **Type**: stdio (command-based MCP server)
-- **Merge**: Preserves existing MCP servers in .mcp.json
-- **Silent Skip**: No errors if Codex not installed
+**Configuration**:
+- **Model**: `gpt-5.2` (override with `CODEX_MODEL` env var)
+- **Reasoning**: `xhigh` (override with `CODEX_REASONING_EFFORT` env var)
+- **Timeout**: `300s` (override with `CODEX_TIMEOUT` env var)
 
 ### Integration Points
 
 | Component | Integration | Data Flow |
 |-----------|-------------|-----------|
-| `initializer.py` | Calls setup_codex_mcp() after external skills sync | → .mcp.json with Codex config |
-| `updater.py` | Calls setup_codex_mcp() during auto update | → .mcp.json with Codex config |
-| `codex.py` | Core detection & setup logic | → Detect → Auth → Merge → Write |
-| `templates/.claude/rules/delegator/*` | Orchestration rules | → Copied to project .claude/rules/ |
-| `templates/.claude/rules/delegator/prompts/*` | GPT expert prompts | → Copied to project .claude/rules/delegator/prompts/ |
+| `/90_review` | GPT Expert Review (Step 10) | Architecture review → GPT Architect |
+| `/02_execute` | GPT Escalation (Step 3.7) | 2+ Coder failures → GPT Architect |
+| `code-reviewer` | GPT Security Analyst Delegation | Security code → GPT Security Analyst |
+| `plan-reviewer` | GPT Plan Reviewer Delegation | Large plans (5+ SCs) → GPT Plan Reviewer |
+| `rules/delegator/*` | Orchestration rules | Delegation flow, triggers, format |
+| `rules/delegator/prompts/*` | GPT expert prompts | 5 expert system instructions |
+
+**Key Features**:
+- **Model**: GPT 5.2 (via Codex CLI)
+- **Script**: Bash wrapper for `codex exec` command
+- **Fallback**: Graceful skip if Codex CLI not installed
+- **Validation**: Checks Codex authentication status
 
 ### GPT Expert Delegation
 
-Available experts via Codex MCP:
+Available experts via Codex CLI:
 
 | Expert | Specialty | Use For |
 |--------|-----------|---------|
@@ -1246,4 +1265,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.3 (Codex Delegator Integration)
+**Version**: 4.0.3 (GPT Expert Integration with Commands and Agents)

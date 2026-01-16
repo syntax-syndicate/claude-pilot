@@ -47,7 +47,7 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
   8. Plan moved to in_progress
 
 ### Execute Implementation
-- **Task**: Implement features using TDD + Ralph Loop + Parallel Verification
+- **Task**: Implement features using TDD + Ralph Loop + Parallel Verification + GPT Escalation
 - **Command**: `/02_execute [--wt]`
 - **Output**: Feature code with tests, coverage 80%+, verified quality
 - **Process**:
@@ -57,7 +57,8 @@ Slash commands for SPEC-First development workflow. Each command manages a speci
   4. Coder Agent executes TDD cycle for each Success Criterion
   5. Parallel Verification (Step 3.5): Tester + Validator + Code-Reviewer agents
   6. Review Feedback Loop (Step 3.6): Address critical findings if any
-  7. Ralph Loop iterates until all quality gates pass
+  7. **GPT Expert Escalation (Step 3.7)**: After 2+ Coder failures, delegate to GPT Architect for fresh perspective
+  8. Ralph Loop iterates until all quality gates pass
 
 ### Close and Archive
 - **Task**: Archive plan, worktree cleanup, create git commit, safe git push
@@ -110,14 +111,17 @@ Push failed for 1 repository:
 ```
 
 ### Review Code
-- **Task**: Multi-angle code review
+- **Task**: Multi-angle code review with GPT expert option
 - **Command**: `/90_review`
 - **Output**: Comprehensive review report
 - **Process**:
   1. Tester Agent: Test coverage and quality
   2. Validator Agent: Type safety and linting
   3. Code-Reviewer Agent: Deep analysis (async bugs, memory leaks)
-  4. Plan-Reviewer Agent: Requirements verification
+  4. **GPT Expert Review (Step 10)**: For complex plans (5+ SCs) or architecture review
+     - GPT Architect: System design, tradeoffs
+     - GPT Plan Reviewer: Large plan validation
+  5. Plan-Reviewer Agent: Requirements verification
 
 ### Document Project
 - **Task**: Sync documentation
