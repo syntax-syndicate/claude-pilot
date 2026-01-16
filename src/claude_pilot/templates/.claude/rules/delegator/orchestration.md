@@ -10,7 +10,6 @@ You have access to GPT experts via the `codex-sync.sh` script. Use them strategi
 
 **Configuration:**
 - Model: `gpt-5.2` (override with `CODEX_MODEL` env var)
-- Reasoning: `xhigh` (override with `CODEX_REASONING_EFFORT` env var)
 - Timeout: `300s` (override with `CODEX_TIMEOUT` env var)
 
 ## Available Experts

@@ -20,7 +20,7 @@ set -euo pipefail
 
 # Configuration
 MODEL="${CODEX_MODEL:-gpt-5.2}"
-REASONING_EFFORT="${CODEX_REASONING_EFFORT:-xhigh}"
+REASONING_EFFORT="${CODEX_REASONING_EFFORT:-}"
 TIMEOUT_SEC="${CODEX_TIMEOUT:-300}"  # 5 minutes default
 
 # Parse arguments
