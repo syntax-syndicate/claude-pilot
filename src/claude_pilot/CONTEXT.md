@@ -94,7 +94,7 @@ All CLI commands follow this structure:
 6. **Extract**: Validate paths, reject symlinks
 7. **Save**: Write new SHA to version file
 
-### Codex MCP Setup Pattern (v4.0.3)
+### Codex MCP Setup Pattern (v4.0.4)
 
 1. **Detect CLI**: Check if `codex` command available (`shutil.which`)
 2. **Check Auth**: Verify `~/.codex/auth.json` has valid tokens
@@ -169,4 +169,4 @@ pytest tests/test_external_skills.py
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.3
+**Version**: 4.0.4

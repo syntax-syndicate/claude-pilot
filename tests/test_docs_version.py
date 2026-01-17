@@ -14,7 +14,7 @@ class TestDocumentationVersion:
     """Test suite for documentation version consistency (TS-1)."""
 
     def test_version_consistency_no_old_version_refs(self, project_root: Path) -> None:
-        """TS-1: Verify no 3.4.0 version references exist in documentation headers."""
+        """TS-1: Verify no 4.0.3 version references exist in documentation headers."""
         doc_files = [
             project_root / "CLAUDE.md",
             project_root / "docs" / "ai-context" / "system-integration.md",
@@ -31,14 +31,14 @@ class TestDocumentationVersion:
             # Version history sections are exempt as they document historical versions
             lines = content.split("\n")[:50]
             header_content = "\n".join(lines)
-            assert "3.4.0" not in header_content, f"Found old version 3.4.0 in header of {doc_file}"
+            assert "4.0.3" not in header_content, f"Found old version 4.0.3 in header of {doc_file}"
 
     def test_version_consistency_current_version_present(self, project_root: Path) -> None:
-        """Verify current version 4.0.3 is present in key documentation."""
+        """Verify current version 4.0.4 is present in key documentation."""
         claude_md = project_root / "CLAUDE.md"
         if claude_md.exists():
             content = claude_md.read_text()
-            assert "4.0.3" in content, "Current version 4.0.3 not found in CLAUDE.md"
+            assert "4.0.4" in content, "Current version 4.0.4 not found in CLAUDE.md"
 
 
 class TestChangelog:

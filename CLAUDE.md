@@ -1,7 +1,7 @@
 # claude-pilot - Claude Code Development Guide
 
 > **Last Updated**: 2026-01-17
-> **Version**: 4.0.3
+> **Version**: 4.0.4
 > **Template**: claude-pilot
 
 ---
@@ -50,7 +50,7 @@ project-root/
 
 ---
 
-## Codex Integration (v4.0.3)
+## Codex Integration (v4.0.4)
 
 **GPT Expert Delegation**: claude-pilot supports optional GPT expert delegation via `codex-sync.sh` script for high-difficulty analysis.
 
@@ -235,5 +235,5 @@ pytest tests/test_feature.py -k "test_name"
 
 ---
 
-**Template Version**: claude-pilot 4.0.3
+**Template Version**: claude-pilot 4.0.4
 **Last Updated**: 2026-01-17

@@ -448,7 +448,7 @@ EXTERNAL_SKILLS_VERSION_FILE = ".claude/.external-skills-version"
 
 ---
 
-## Codex Delegator Integration (v4.0.3)
+## Codex Delegator Integration (v4.0.4)
 
 ### Overview
 
@@ -1352,4 +1352,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.3 (GPT Expert Integration with Commands and Agents)
+**Version**: 4.0.4 (Repo Structure Improvement)

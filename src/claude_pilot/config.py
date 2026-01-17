@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 # Version information
-VERSION = "4.0.3"
+VERSION = "4.0.4"
 VERSION_FILE = ".claude/.pilot-version"
 
 # Remote repository URLs
@@ -39,11 +39,16 @@ MANAGED_FILES: list[tuple[str, str]] = [
     (".claude/commands/90_review.md", ".claude/commands/90_review.md"),
     (".claude/commands/91_document.md", ".claude/commands/91_document.md"),
     (".claude/commands/92_init.md", ".claude/commands/92_init.md"),
+    # Commands CONTEXT file (curated subset)
+    (".claude/commands/CONTEXT.md", ".claude/commands/CONTEXT.md"),
     # Agents (new - context isolation architecture)
     (".claude/agents/*.md", ".claude/agents/"),
+    (".claude/agents/CONTEXT.md", ".claude/agents/CONTEXT.md"),
     # Skills (new - progressive disclosure knowledge)
     (".claude/skills/**/SKILL.md", ".claude/skills/"),
     (".claude/skills/**/REFERENCE.md", ".claude/skills/"),
+    # Skills CONTEXT file (curated subset)
+    (".claude/skills/CONTEXT.md", ".claude/skills/CONTEXT.md"),
     # Templates
     (".claude/templates/CONTEXT.md.template", ".claude/templates/CONTEXT.md.template"),
     (
@@ -84,12 +89,9 @@ MANAGED_FILES: list[tuple[str, str]] = [
     (".claude/rules/delegator/prompts/scope-analyst.md", ".claude/rules/delegator/prompts/scope-analyst.md"),
     (".claude/rules/delegator/prompts/security-analyst.md", ".claude/rules/delegator/prompts/security-analyst.md"),
     # Guides (new - methodology documentation)
-    (".claude/guides/prp-framework.md", ".claude/guides/prp-framework.md"),
-    (".claude/guides/parallel-execution.md", ".claude/guides/parallel-execution.md"),
-    (".claude/guides/review-checklist.md", ".claude/guides/review-checklist.md"),
-    (".claude/guides/gap-detection.md", ".claude/guides/gap-detection.md"),
-    (".claude/guides/3tier-documentation.md", ".claude/guides/3tier-documentation.md"),
-    (".claude/guides/test-environment.md", ".claude/guides/test-environment.md"),
+    (".claude/guides/*.md", ".claude/guides/"),
+    # Guides CONTEXT file (curated subset)
+    (".claude/guides/CONTEXT.md", ".claude/guides/CONTEXT.md"),
 ]
 
 # User-owned files (never overwritten)

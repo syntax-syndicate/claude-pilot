@@ -9,9 +9,9 @@
 
 ```yaml
 Framework: Python CLI Tool
-Language: Python 3.10+
-Package Manager: Poetry/pip
-Version: 4.0.3
+Language: Python 3.9+
+Package Manager: pip (Hatchling build backend)
+Version: 4.0.4
 Deployment: PyPI package distribution
 ```
 
@@ -587,4 +587,4 @@ claude-pilot update --apply-statusline
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.3 (GPT Expert Integration with Commands and Agents)
+**Version**: 4.0.4 (Repo Structure Improvement)

@@ -143,7 +143,7 @@ SC-2: All 8 guide files created
 | Type | Description | Examples |
 |------|-------------|----------|
 | **Time** | Deadlines, milestones | "Complete by sprint end" |
-| **Technical** | Platform, language, APIs | "Must use Python 3.11+" |
+| **Technical** | Platform, language, APIs | "Must use Python 3.9+" |
 | **Resource** | Team, budget, access | "Single developer" |
 
 ### Example
