@@ -461,8 +461,8 @@ The Codex delegator integration provides optional GPT expert delegation via `cod
 | `codex.py` | Codex CLI detection, auth check, MCP setup |
 | `initializer.py` | Calls setup_codex_mcp() during init |
 | `updater.py` | Calls setup_codex_mcp() during update |
-| `templates/.claude/rules/delegator/*` | 4 orchestration rules (delegation-format, model-selection, orchestration, triggers) |
-| `templates/.claude/rules/delegator/prompts/*` | 5 GPT expert prompts (architect, code-reviewer, plan-reviewer, scope-analyst, security-analyst) |
+| `.claude/rules/delegator/*` | 4 orchestration rules (delegation-format, model-selection, orchestration, triggers) |
+| `.claude/rules/delegator/prompts/*` | 5 GPT expert prompts (architect, code-reviewer, plan-reviewer, scope-analyst, security-analyst) |
 
 ### Codex Integration Flow
 
@@ -548,7 +548,7 @@ Available experts via Codex CLI:
 
 ### Delegation Rules (4 Files)
 
-Located in `templates/.claude/rules/delegator/`:
+Located in `.claude/rules/delegator/`:
 
 | File | Purpose |
 |------|---------|
@@ -559,7 +559,7 @@ Located in `templates/.claude/rules/delegator/`:
 
 ### Expert Prompts (5 Files)
 
-Located in `templates/.claude/rules/delegator/prompts/`:
+Located in `.claude/rules/delegator/prompts/`:
 
 | File | Expert | Mode | Output |
 |------|--------|------|--------|
@@ -777,7 +777,7 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation, cr
 | `claude-pilot init` | Sets up Codex MCP | Creates `.mcp.json` with GPT 5.2 config (if Codex installed) |
 | `claude-pilot update` | Syncs external skills | Updates external skills from GitHub (skips if current) |
 | `claude-pilot update` | Updates Codex MCP | Merges Codex config into `.mcp.json` (if Codex installed) |
-| `/999_publish` Step 0.5 | Syncs templates | `.claude/` → `src/claude_pilot/templates/.claude/` |
+| `/999_publish` Step 0.5 | Syncs templates (deprecated in v4.0.4) | `.claude/` → `src/claude_pilot/templates/.claude/` (replaced by build hook) |
 | `/999_publish` Step 3-5 | Updates all 6 version files | pyproject.toml, __init__.py, config.py, install.sh, .pilot-version files |
 
 ---
@@ -855,7 +855,7 @@ exclude = [
      - src/claude_pilot/config.py
      - install.sh
      - .claude/.pilot-version
-     - src/claude_pilot/templates/.claude/.pilot-version
+     - src/claude_pilot/assets/.claude/.pilot-version (build-time generated)
 
 4. **Step 3: Check Version Mismatch**
    - Compare all 6 version locations
@@ -880,7 +880,7 @@ exclude = [
 
 8. **Step 7: Update .pilot-version Files**
    - Update .claude/.pilot-version
-   - Update templates/.claude/.pilot-version
+   - Build hook automatically updates src/claude_pilot/assets/.claude/.pilot-version
    - Verify all 6 files show new version
 
 ### Integration Points
@@ -906,7 +906,7 @@ exclude = [
 | config.py | `/src/claude_pilot/config.py` | Configuration version |
 | install.sh | `/install.sh` | Installation script version |
 | .pilot-version | `/.claude/.pilot-version` | Development template version |
-| templates/.pilot-version | `/src/claude_pilot/templates/.claude/.pilot-version` | Deployment template version |
+| assets/.pilot-version | `/src/claude_pilot/assets/.claude/.pilot-version` | Deployment template version (build-time generated) |
 
 ---
 

@@ -33,8 +33,8 @@
 ```
 project-root/
 ├── .claude/
-│   ├── commands/           # Slash commands (7)
-│   ├── guides/             # Methodology guides (10)
+│   ├── commands/           # Slash commands (9)
+│   ├── guides/             # Methodology guides (12)
 │   ├── skills/             # TDD, Ralph Loop, Vibe Coding, Git Master
 │   ├── agents/             # Specialized agent configs (8)
 │   └── scripts/hooks/      # Type check, lint, todos
@@ -145,6 +145,7 @@ pytest tests/test_feature.py -k "test_name"
 | `.claude/guides/` | [CONTEXT.md](.claude/guides/CONTEXT.md) | Methodology patterns |
 | `.claude/skills/` | [CONTEXT.md](.claude/skills/CONTEXT.md) | Skill reference |
 | `.claude/agents/` | [CONTEXT.md](.claude/agents/CONTEXT.md) | Agent types |
+| `src/claude_pilot/` | [CONTEXT.md](src/claude_pilot/CONTEXT.md) | Core package architecture |
 
 **See**: `docs/ai-context/docs-overview.md` for complete documentation navigation.
 

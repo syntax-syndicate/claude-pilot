@@ -180,9 +180,10 @@ Feature-level implementation details for specific features or deeply nested impl
 | Location | Status | Notes |
 |----------|--------|-------|
 | `.claude/commands/CONTEXT.md` | Created | Documents 8 command files |
-| `.claude/guides/CONTEXT.md` | Created | Documents 9 guide files |
-| `.claude/skills/CONTEXT.md` | Created | Documents 4 skill modules |
-| `.claude/agents/CONTEXT.md` | Created | Documents 4 agent configs |
+| `.claude/guides/CONTEXT.md` | Created | Documents 10+ guide files |
+| `.claude/skills/CONTEXT.md` | Created | Documents 5 skill modules (tdd, ralph-loop, vibe-coding, git-master, documentation-best-practices) |
+| `.claude/agents/CONTEXT.md` | Created | Documents 8 agent configs |
+| `src/claude_pilot/CONTEXT.md` | Created | Core Python package architecture (cli.py, codex.py, config.py, assets.py, build_hook.py, initializer.py, updater.py) |
 
 ### To Create
 

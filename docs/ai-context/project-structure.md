@@ -22,7 +22,7 @@ Deployment: PyPI package distribution
 ```
 claude-pilot/
 ├── .claude/
-│   ├── commands/           # Slash commands (6)
+│   ├── commands/           # Slash commands (9)
 │   │   ├── CONTEXT.md      # Command folder context (NEW)
 │   │   ├── 00_plan.md      # Create SPEC-First plan
 │   │   ├── 01_confirm.md   # Confirm plan (with Step 1.5 extraction)
@@ -32,7 +32,7 @@ claude-pilot/
 │   │   ├── 91_document.md  # Update docs
 │   │   ├── 92_init.md      # Initialize 3-Tier docs
 │   │   └── 999_publish.md  # Publish to PyPI
-│   ├── guides/             # Methodology guides (10)
+│   ├── guides/             # Methodology guides (12)
 │   │   ├── CONTEXT.md      # Guide folder context (NEW)
 │   │   ├── claude-code-standards.md  # Official Claude Code standards (NEW)
 │   │   ├── prp-framework.md          # Problem-Requirements-Plan
@@ -73,6 +73,7 @@ claude-pilot/
 │   │   │   ├── lint.sh
 │   │   │   ├── check-todos.sh
 │   │   │   └── branch-guard.sh
+│   │   ├── codex-sync.sh   # GPT expert delegation (CRITICAL)
 │   │   └── worktree-utils.sh  # Worktree utilities (lock, cleanup)
 │   └── rules/              # Core rules
 │       ├── core/workflow.md
@@ -91,7 +92,8 @@ claude-pilot/
 │   └── slash-command-enhancement-examples.md
 ├── scripts/                # Sync and build scripts
 │   ├── sync-templates.sh   # Pre-deploy templates sync
-│   └── verify-version-sync.sh  # Version consistency check
+│   ├── verify-version-sync.sh  # Version consistency check
+│   └── codex-sync.sh       # GPT expert delegation (via .claude/scripts/)
 ├── src/                    # Source code
 │   └── claude_pilot/       # Main package
 │       ├── py.typed        # PEP 561 type marker
