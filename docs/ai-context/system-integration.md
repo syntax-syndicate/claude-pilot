@@ -784,15 +784,63 @@ The `/01_confirm` command extracts the plan from the `/00_plan` conversation, cr
 
 ## /999_publish Command Workflow
 
-The `/999_publish` command prepares and deploys claude-pilot to PyPI. **Updated with Step 0.5 (2026-01-15)** to automatically sync templates before version bump.
+The `/999_publish` command prepares and deploys claude-pilot to PyPI. **Updated with Step 0.5 (2026-01-15)** to automatically sync templates before version bump. **Updated with Build Hook Pipeline (2026-01-17)** to generate assets at build time.
+
+### Build-Time Asset Generation (v4.0.4)
+
+**Architecture Overview**:
+```
+.claude/** (Development SoT)
+      ↓
+Hatchling Build Hook
+      ↓
+src/claude_pilot/assets/.claude/** (Packaged Assets)
+      ↓
+Wheel (contains only generated assets)
+```
+
+**Key Changes** (v4.0.4):
+- **No committed templates mirror**: Assets generated at build time
+- **AssetManifest**: Single Source of Truth for curated subset
+- **sdist**: Contains `.claude/**` inputs for build hook
+- **Wheel**: Contains only `src/claude_pilot/assets/.claude/**` (generated)
+- **Verification**: Required/forbidden path checks
+
+**Build Hook Configuration** (pyproject.toml):
+```toml
+[tool.hatch.build.targets.wheel.hooks.custom]
+path = "src/claude_pilot/build_hook.py"
+
+[tool.hatch.build.targets.wheel]
+exclude = [".claude/**"]  # Build hook generates assets instead
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/claude_pilot/**/*.py",
+  ".claude/**",  # Source files for build hook
+  "pyproject.toml",
+  "README.md",
+  "LICENSE",
+]
+exclude = [
+  ".claude/skills/external/**",
+  ".claude/.external-skills-version",
+  ".claude/commands/999_publish.md",
+  ".pilot/**",
+]
+```
+
+**AssetManifest Patterns**:
+- **Include**: Core commands, agents, skills, guides, hooks, rules, settings.json
+- **Exclude**: External skills, repo-dev-only commands (999_publish), .pilot directory
+- **Special case**: settings.json (merge-only policy, never overwrite)
 
 ### Step Sequence
 
-1. **Step 0.5: Sync Templates (CRITICAL)** - NEW
-   - 0.5.1 Sync commands (excluding 999_publish.md)
-   - 0.5.2 Sync skills (SKILL.md + REFERENCE.md)
-   - 0.5.3 Sync guides, agents, rules, templates, hooks
-   - 0.5.4 Verify sync (file counts and sizes)
+1. **Step 0.5: Sync Templates (CRITICAL)** - DEPRECATED (v4.0.4)
+   - **NOTE**: This step is no longer needed with build-time asset generation
+   - The build hook automatically generates assets from `.claude/**`
+   - Kept for backward compatibility during transition
 
 2. **Step 1: Pre-Flight Verification**
    - Check git status (must be clean)
@@ -820,7 +868,9 @@ The `/999_publish` command prepares and deploys claude-pilot to PyPI. **Updated 
    - Commit version bump
 
 6. **Step 5: Build & Verify**
-   - Build package
+   - Build package (`python3 -m build`)
+   - Build hook generates assets automatically
+   - Verify wheel contents (required paths present, forbidden paths absent)
    - Verify version in build artifacts
    - Run tests against built package
 
@@ -837,10 +887,14 @@ The `/999_publish` command prepares and deploys claude-pilot to PyPI. **Updated 
 
 | Component | Integration | Data Flow |
 |-----------|-------------|-----------|
-| `/999_publish` Step 0.5 | Syncs templates | `.claude/` → `src/claude_pilot/templates/.claude/` |
+| Build Hook (v4.0.4) | Generates assets | `.claude/**` → `src/claude_pilot/assets/.claude/**` |
+| `/999_publish` Step 5 | Build & verify | Wheel with generated assets |
+| `AssetManifest` | Curated subset | Include/exclude patterns |
+| `verify_wheel_contents()` | Quality gate | Required/forbidden path checks |
+| `/999_publish` Step 0.5 | Sync templates | DEPRECATED (build hook replaces) |
 | `/999_publish` Step 4 | Checks version | Reads all 6 version files |
 | `/999_publish` Step 5 | Updates version | Writes to all 6 version files |
-| `scripts/sync-templates.sh` | Automates sync | Called by Step 0.5 |
+| `scripts/sync-templates.sh` | Automates sync | DEPRECATED (build hook replaces) |
 | `scripts/verify-version-sync.sh` | Verifies sync | Called after version update |
 
 ### Version File Locations
@@ -1352,4 +1406,4 @@ Task:
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.4 (Repo Structure Improvement)
+**Version**: 4.0.4 (SSOT Assets Build Hook)

@@ -18,8 +18,10 @@ This package contains the core functionality for the claude-pilot CLI tool, incl
 | `__init__.py` | Package initialization, version export | 10 |
 | `__main__.py` | Package entry point for `python -m claude_pilot` | 5 |
 | `cli.py` | Click-based CLI commands (init, update, version) | 230 |
-| `codex.py` | Codex CLI detection, auth check, MCP setup (NEW) | 101 |
+| `codex.py` | Codex CLI detection, auth check, MCP setup | 101 |
 | `config.py` | Configuration constants, version, managed files, external skills config | 157 |
+| `assets.py` | AssetManifest for curated Claude Code assets (NEW) | 268 |
+| `build_hook.py` | Hatchling build hook for build-time asset generation (NEW) | 204 |
 | `initializer.py` | Project initialization logic, language selection, template copying | 392 |
 | `updater.py` | Update management, external skills sync, GitHub API integration | 1010+ |
 | `py.typed` | PEP 561 type marker for mypy | 0 |
@@ -94,6 +96,20 @@ All CLI commands follow this structure:
 6. **Extract**: Validate paths, reject symlinks
 7. **Save**: Write new SHA to version file
 
+### Build-Time Asset Generation Pattern (v4.0.4)
+
+1. **Build Hook Trigger**: Hatchling invokes `AssetGenerationHook` during wheel build
+2. **Source Directory**: Read from `.claude/**` (development SoT)
+3. **Asset Manifest**: Filter using `AssetManifest` (include/exclude patterns)
+4. **Generate Assets**: Copy to `src/claude_pilot/assets/.claude/**`
+5. **Verify Contents**: Check required/forbidden paths
+6. **Package**: Wheel contains only generated assets (no templates mirror)
+
+**AssetManifest Configuration**:
+- **Include**: Core commands, agents, skills, guides, hooks, rules, settings.json
+- **Exclude**: External skills, repo-dev-only (999_publish), .pilot directory
+- **Special Cases**: settings.json (merge-only policy, never overwrite)
+
 ### Codex MCP Setup Pattern (v4.0.4)
 
 1. **Detect CLI**: Check if `codex` command available (`shutil.which`)
@@ -142,7 +158,9 @@ All CLI commands follow this structure:
 | `tests/test_initializer.py` | Init command tests | 80%+ |
 | `tests/test_updater.py` | Update command tests | 80%+ |
 | `tests/test_external_skills.py` | External skills sync tests | 90%+ |
-| `tests/test_codex.py` | Codex detection & MCP setup tests (NEW) | 81%+ |
+| `tests/test_codex.py` | Codex detection & MCP setup tests | 81%+ |
+| `tests/test_assets.py` | Asset manifest and generation tests (NEW) | 88%+ |
+| `tests/test_build_hook.py` | Build hook and verification tests (NEW) | 72%+ |
 
 ### Running Tests
 
@@ -169,4 +187,4 @@ pytest tests/test_external_skills.py
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.4
+**Version**: 4.0.4 (SSOT Assets Build Hook)

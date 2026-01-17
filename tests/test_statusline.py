@@ -15,16 +15,25 @@ from pathlib import Path
 
 import pytest
 
-from claude_pilot import config
-
 
 class TestStatuslineScript:
     """Test statusline.sh script functionality."""
 
     def get_statusline_script_path(self) -> Path:
-        """Get the path to the statusline.sh script from templates."""
-        templates_path = config.get_templates_path()
-        return Path(templates_path) / ".claude" / "scripts" / "statusline.sh"
+        """Get the path to the statusline.sh script from assets/templates."""
+        import importlib.resources
+
+        # Try assets first (new location), fall back to templates (dev env)
+        try:
+            assets_path = importlib.resources.files("claude_pilot") / "assets"
+            if assets_path.is_dir():
+                return Path(str(assets_path)) / ".claude" / "scripts" / "statusline.sh"
+        except (AttributeError, FileNotFoundError):
+            pass
+
+        # Fall back to templates for development environment
+        templates_path = importlib.resources.files("claude_pilot") / "templates"
+        return Path(str(templates_path)) / ".claude" / "scripts" / "statusline.sh"
 
     def run_statusline_script(
         self, cwd: str, tmp_path: Path, model: str = "Sonnet 4"

@@ -152,12 +152,12 @@ def get_version_file_path(target_dir: Path | None = None) -> Path:
 
 def get_templates_path() -> Any:
     """
-    Get the path to the bundled templates directory.
+    Get the path to the bundled assets directory.
 
     Returns:
-        Traversable path to the templates directory in the package.
+        Traversable path to the assets directory in the package.
     """
-    return importlib.resources.files("claude_pilot") / "templates"
+    return importlib.resources.files("claude_pilot") / "assets"
 
 
 def get_template_path(template_name: str) -> Any:

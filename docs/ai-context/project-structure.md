@@ -94,29 +94,18 @@ claude-pilot/
 │   └── verify-version-sync.sh  # Version consistency check
 ├── src/                    # Source code
 │   └── claude_pilot/       # Main package
-│       ├── py.typed        # PEP 561 type marker (NEW)
-│       ├── templates/      # Deployment templates (synced)
+│       ├── py.typed        # PEP 561 type marker
+│       ├── assets/         # Packaged assets (generated at build time) (NEW)
+│       │   └── .claude/    # Curated Claude Code assets (build-time generation)
+│       ├── templates/      # Development templates (legacy, will be removed)
 │       │   └── .claude/
-│       │       ├── scripts/
-│       │       │   └── statusline.sh  # Statusline script (NEW)
-│       │       ├── settings.json      # StatusLine config (UPDATED)
-│       │       └── rules/
-│       │           └── delegator/     # Codex delegation orchestration (NEW)
-│       │               ├── delegation-format.md
-│       │               ├── model-selection.md
-│       │               ├── orchestration.md
-│       │               ├── triggers.md
-│       │               └── prompts/    # GPT expert prompts (NEW)
-│       │                   ├── architect.md
-│       │                   ├── code-reviewer.md
-│       │                   ├── plan-reviewer.md
-│       │                   ├── scope-analyst.md
-│       │                   └── security-analyst.md
-│       ├── cli.py          # CLI with --skip-external-skills flag (UPDATED)
-│       ├── codex.py        # Codex CLI detection, auth check, MCP setup (NEW)
-│       ├── config.py       # EXTERNAL_SKILLS config (UPDATED)
-│       ├── initializer.py  # Init with external skills + Codex sync (UPDATED)
-│       └── updater.py      # External skills + Codex sync functions (UPDATED)
+│       ├── cli.py          # CLI with --skip-external-skills flag
+│       ├── codex.py        # Codex CLI detection, auth check, MCP setup
+│       ├── config.py       # EXTERNAL_SKILLS config (UPDATED: assets path)
+│       ├── assets.py       # AssetManifest for curated assets (NEW)
+│       ├── build_hook.py   # Hatchling build hook for asset generation (NEW)
+│       ├── initializer.py  # Init with external skills + Codex sync
+│       └── updater.py      # External skills + Codex sync functions
 ├── tests/                  # Test files
 │   ├── test_worktree_utils.py  # Worktree utilities tests (NEW: 8 tests, 2026-01-17)
 ├── CLAUDE.md               # Tier 1: Project documentation
@@ -433,6 +422,16 @@ claude-pilot update --apply-statusline
 
 ### v4.0.4 (2026-01-17)
 
+- **SSOT Assets Build Hook**: Single Source of Truth for Claude Code assets
+  - Build-time asset generation via Hatchling hook (no committed templates mirror)
+  - `AssetManifest` class for curated subset (include/exclude patterns)
+  - Wheel contains only generated assets (`src/claude_pilot/assets/.claude/**`)
+  - sdist contains `.claude/**` inputs for build hook
+  - Conservative settings.json merge (never overwrite user settings)
+  - Wheel content verification (required/forbidden paths)
+- **New files**: `src/claude_pilot/assets.py`, `src/claude_pilot/build_hook.py`
+- **New tests**: `tests/test_assets.py` (13 tests), `tests/test_build_hook.py` (8 tests)
+- **Updated files**: `config.py` (templates → assets path), `pyproject.toml` (build hook config)
 - **Worktree Close Flow Improvement**: Fixed worktree mode `/02_execute` and `/03_close` for multi-worktree concurrent execution
 - **Absolute paths**: `create_worktree()` now returns absolute paths (no more relative paths breaking on cwd reset)
 - **Enhanced metadata**: `add_worktree_metadata()` stores 5 fields (added Main Project, Lock File)
@@ -442,7 +441,7 @@ claude-pilot update --apply-statusline
 - **Fixed parsing**: `read_worktree_metadata()` uses multi-line extraction (not grep -A1)
 - **New tests**: `test_worktree_utils.py` with 8 tests covering worktree utilities
 - **Updated files**: worktree-utils.sh, 02_execute.md, 03_close.md, test_worktree_utils.py
-- **Verification**: All 7 success criteria met (SC-1 through SC-7)
+- **Verification**: All 8 success criteria met (SC-1 through SC-8)
 
 ### v3.4.0 (2026-01-16)
 
@@ -587,4 +586,4 @@ claude-pilot update --apply-statusline
 ---
 
 **Last Updated**: 2026-01-17
-**Version**: 4.0.4 (Repo Structure Improvement)
+**Version**: 4.0.4 (SSOT Assets Build Hook)
