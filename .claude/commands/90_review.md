@@ -80,6 +80,40 @@ Read and extract: User requirements, Execution plan, Acceptance criteria, Test s
 
 ---
 
+## Step 0.5: GPT Delegation Trigger Check (MANDATORY)
+
+> **⚠️ CRITICAL**: Before starting review, check if GPT expert review is needed.
+> See: @.claude/rules/delegator/triggers.md
+
+### When to Delegate to GPT Plan Reviewer:
+
+| Condition | Action |
+|-----------|--------|
+| Plan has 5+ success criteria | Delegate to GPT Plan Reviewer |
+| Architecture decisions involved | Delegate to GPT Architect |
+| Security-sensitive changes | Delegate to GPT Security Analyst |
+| Simple plan (< 5 SCs) | Use Claude plan-reviewer agent |
+
+### If Delegation Needed:
+
+1. Check Codex CLI availability:
+   ```bash
+   if ! command -v codex &> /dev/null; then
+       echo "Warning: Codex CLI not installed - falling back to Claude-only review"
+       # Skip GPT delegation, use Claude plan-reviewer agent
+   fi
+   ```
+2. Read expert prompt: `Read .claude/rules/delegator/prompts/plan-reviewer.md`
+3. Call delegation: `.claude/scripts/codex-sync.sh "read-only" "<prompt>"`
+4. Synthesize findings
+5. Continue to Step 1
+
+### If No Delegation:
+
+Continue to Step 1 with Claude plan-reviewer agent (Step 4 below).
+
+---
+
 ## Step 1: Proactive Investigation
 
 > **Principle**: Investigate all "needs investigation/confirmation/review" items upfront

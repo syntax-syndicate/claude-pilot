@@ -35,6 +35,38 @@ You have access to GPT experts via the `codex-sync.sh` script. Use them strategi
 
 ---
 
+## ⛔ STOP AND CHECK REMINDERS
+
+These reminders should be inserted at critical decision points in ALL commands:
+
+### After Any Failure
+⛔ **STOP**: Has this failed 2+ times?
+- If YES → Delegate to Architect (fresh perspective)
+- If NO → Retry with Claude
+
+### Before Architecture Decisions
+⛔ **STOP**: Is this a system design decision?
+- If YES → Consider GPT Architect consultation
+- If NO → Proceed with Claude
+
+### After Security Code Changes
+⛔ **STOP**: Did this touch authentication/authorization?
+- If YES → Delegate to GPT Security Analyst
+- If NO → Continue with code-reviewer
+
+### During Plan Review
+⛔ **STOP**: Does this plan have 5+ success criteria?
+- If YES → Delegate to GPT Plan Reviewer
+- If NO → Use Claude plan-reviewer agent
+
+### Before Proceeding with Execution
+⛔ **STOP**: Check for GPT delegation triggers
+- Scan input for: architecture, security, failures, explicit requests
+- If trigger found → Read expert prompt → Delegate
+- If no trigger → Continue with Claude
+
+---
+
 ## PROACTIVE Delegation (Check on EVERY message)
 
 Before handling any request, check if an expert would help:

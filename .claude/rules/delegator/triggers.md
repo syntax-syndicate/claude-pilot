@@ -2,6 +2,42 @@
 
 This file defines when to delegate to GPT experts via Codex.
 
+## ⚠️ CRITICAL ENFORCEMENT
+
+**This is NOT optional.** Trigger detection MUST happen automatically.
+
+### Enforcement Protocol
+
+**Commands MUST include trigger detection checkpoints at key decision points:**
+- `/02_execute`: After Step 1 (Plan Detection), before Step 2
+- `/90_review`: After Step 0 (Load Plan), before Step 1
+- Any command handling failures, architecture decisions, or security concerns
+
+### When to Check (MANDATORY)
+
+- **Before starting ANY command execution**
+- **At key decision points within commands**
+- **When encountering documented trigger keywords**
+- **After ANY failure (2+ attempts → escalate)**
+
+### Trigger Check Template
+
+1. **STOP**: Scan input for trigger signals
+2. **MATCH**: Identify expert type from triggers below
+3. **READ**: Load expert prompt file from `.claude/rules/delegator/prompts/`
+4. **EXECUTE**: Call codex-sync.sh or continue
+5. **CONFIRM**: Log delegation decision
+
+### BEFORE PROCEEDING Checklist
+
+- [ ] Scanned for explicit triggers ("ask GPT", "consult GPT")
+- [ ] Checked for failure escalation (2+ attempts on same issue)
+- [ ] Checked for architecture decision keywords
+- [ ] Checked for security-related keywords
+- [ ] If trigger matched → read expert prompt → delegate
+
+---
+
 ## IMPORTANT: Check These Triggers on EVERY Message
 
 You MUST scan incoming messages for delegation triggers. This is NOT optional.

@@ -120,6 +120,40 @@ printf "%s" "$PLAN_PATH" > "$PROJECT_ROOT/.pilot/plan/active/${KEY}.txt"
 
 ---
 
+## Step 1.5: GPT Delegation Trigger Check (MANDATORY)
+
+> **⚠️ CRITICAL**: Before proceeding with execution, check for GPT delegation triggers.
+> This is NOT optional. See: @.claude/rules/delegator/triggers.md
+
+### Trigger Detection Checklist
+
+| Trigger | Signal | Action |
+|---------|--------|--------|
+| 2+ failed attempts | Previous attempts failed | Delegate to Architect |
+| Architecture decision | "tradeoffs", "design", "structure", "how should I" | Delegate to Architect |
+| Security concern | "auth", "vulnerability", "secure", "security" | Delegate to Security Analyst |
+| User explicit | "ask GPT", "consult GPT", "GPT review" | Route accordingly |
+
+### If Trigger Matches:
+
+1. Read expert prompt: `Read .claude/rules/delegator/prompts/[expert].md`
+2. Check Codex CLI availability:
+   ```bash
+   if ! command -v codex &> /dev/null; then
+       echo "Warning: Codex CLI not installed - falling back to Claude-only analysis"
+       # Skip GPT delegation, continue with Claude analysis
+   fi
+   ```
+3. Call delegation: `.claude/scripts/codex-sync.sh "read-only" "<prompt>"`
+4. Synthesize response and apply to execution
+5. Continue to Step 2
+
+### If No Trigger:
+
+Continue to Step 2.
+
+---
+
 ## Step 2: Convert Plan to Todo List
 
 Read plan, extract: Deliverables, Phases, Tasks, Acceptance Criteria, Test Plan
